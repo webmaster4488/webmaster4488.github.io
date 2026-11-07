@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>44 JFK Street</title>
+  <meta name="description" content="44 JFK Street, Cambridge, Massachusetts.">
+  <meta name="theme-color" content="#1f282c">
+  <script>document.documentElement.classList.add('js')</script>
+
+  <!-- Link previews (iMessage, WhatsApp, Slack, etc.) -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://44jfk.com/">
+  <meta property="og:title" content="44 JFK Street">
+  <meta property="og:description" content="Cambridge, Massachusetts">
+  <meta property="og:image" content="https://44jfk.com/images/share.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text&display=swap" rel="stylesheet">
+
+  <link rel="preload" as="image" type="image/webp"
+        imagesrcset="images/door-1000.webp 1000w, images/door-1600.webp 1600w, images/door-2400.webp 2400w, images/door-3200.webp 3200w"
+        imagesizes="(max-aspect-ratio: 7/5) 140vh, 100vw">
+
+  <style>
+    :root {
+      --green: #1f282c;
+      --green-deep: #161c1f;
+      --gold: #d2a03d;
+      --cream: #efe8d6;
+      --bar-h: 72px;
+    }
+
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+    body {
+      margin: 0;
+      background: var(--green-deep);
+      color: var(--cream);
+      font-family: "Libre Caslon Text", "Big Caslon", Baskerville, Georgia, serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---- The photograph: the whole screen ---- */
+    .hero {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      height: 100svh;
+      overflow: hidden;
+      background: var(--green-deep);
+    }
+    .hero img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50.3% 35%;
+    }
+    .js .hero img {
+      opacity: 0;
+      transform: scale(1.04);
+    }
+    .js .hero img.loaded {
+      opacity: 1;
+      transform: none;
+      transition: opacity 1.6s ease, transform 2.8s cubic-bezier(.2, .7, .2, 1);
+    }
+
+    /* a fine line at the bottom inviting a scroll */
+    .cue {
+      position: absolute;
+      left: 50%;
+      bottom: calc(clamp(18px, 4vh, 36px) + env(safe-area-inset-bottom));
+      width: 1px;
+      height: 48px;
+      overflow: hidden;
+      transform: translateX(-50%);
+      transition: opacity 0.6s ease;
+    }
+    .cue::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.85);
+      transform-origin: top;
+      animation: draw 2.6s 2s cubic-bezier(.6, 0, .3, 1) infinite both;
+    }
+    @keyframes draw {
+      0%   { transform: scaleY(0); transform-origin: top; }
+      45%  { transform: scaleY(1); transform-origin: top; }
+      55%  { transform: scaleY(1); transform-origin: bottom; }
+      100% { transform: scaleY(0); transform-origin: bottom; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .cue::after { animation: none; transform: none; opacity: 0.6; }
+      .js .hero img { transform: none; }
+    }
+
+    /* ---- Bar that appears once you scroll ---- */
+    .bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      height: var(--bar-h);
+      padding-top: env(safe-area-inset-top);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(31, 40, 44, 0.72);
+      -webkit-backdrop-filter: blur(14px) saturate(1.2);
+      backdrop-filter: blur(14px) saturate(1.2);
+      box-shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.45);
+      transform: translateY(calc(-100% - 32px));
+      transition: transform 0.7s cubic-bezier(.2, .7, .2, 1);
+    }
+    .bar a { display: block; padding: 6px; }
+    .bar img { display: block; height: 46px; width: auto; }
+    @media (max-width: 600px) { :root { --bar-h: 60px; } .bar img { height: 38px; } }
+    .scrolled .bar { transform: none; }
+    .scrolled .cue { opacity: 0; }
+
+    /* ---- Below the photograph ---- */
+    .close {
+      position: relative;
+      z-index: 1;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+      background: rgba(31, 40, 44, 0.72);
+      -webkit-backdrop-filter: blur(14px) saturate(1.2);
+      backdrop-filter: blur(14px) saturate(1.2);
+      box-shadow: 0 -12px 30px -14px rgba(0, 0, 0, 0.45);
+      text-align: center;
+    }
+    .address {
+      margin: 0;
+      font-weight: 400;
+      font-size: clamp(11px, 0.9vw, 13px);
+      letter-spacing: 0.28em;
+      line-height: 1.6;
+      text-transform: uppercase;
+      padding-left: 0.28em; /* balances the trailing letter-space */
+    }
+    .address .street { color: var(--cream); }
+    .address .sep { color: var(--gold); margin: 0 0.9em; }
+    .address .city { color: var(--gold); }
+    @media (max-width: 600px) {
+      .address { line-height: 2; }
+      .address span { display: block; }
+      .address .sep { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="bar">
+    <a href="#top" aria-label="Back to top">
+      <picture>
+        <source type="image/webp" srcset="images/crest.webp">
+        <img src="images/crest.png" width="575" height="720" alt="Crest">
+      </picture>
+    </a>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <picture>
+        <source type="image/webp"
+                srcset="images/door-1000.webp 1000w, images/door-1600.webp 1600w, images/door-2400.webp 2400w, images/door-3200.webp 3200w"
+                sizes="(max-aspect-ratio: 7/5) 140vh, 100vw">
+        <img src="images/door-2400.jpg"
+             srcset="images/door-1000.jpg 1000w, images/door-1600.jpg 1600w, images/door-2400.jpg 2400w, images/door-3200.jpg 3200w"
+             sizes="(max-aspect-ratio: 7/5) 140vh, 100vw"
+             width="4691" height="3351"
+             alt="The green front door of 44 JFK Street, with a bronze knocker and brass numerals, framed by white columns.">
+      </picture>
+      <span class="cue" aria-hidden="true"></span>
+    </section>
+
+    <footer class="close">
+      <h1 class="address">
+        <span class="street">44 JFK Street</span><span class="sep" aria-hidden="true">·</span><span class="city">Cambridge, Massachusetts</span>
+      </h1>
+    </footer>
+  </main>
+
+  <script>
+    // Fade the photograph in once it has loaded
+    var photo = document.querySelector('.hero img');
+    function show() { photo.classList.add('loaded'); }
+    if (photo.complete) show(); else { photo.addEventListener('load', show); photo.addEventListener('error', show); }
+
+    // Reveal the bar after the first bit of scrolling
+    function onScroll() { document.body.classList.toggle('scrolled', window.scrollY > 16); }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  </script>
+</body>
+</html>
