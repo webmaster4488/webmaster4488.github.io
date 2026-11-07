@@ -23,15 +23,25 @@
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text&display=swap" rel="stylesheet">
+  <!-- Century Schoolbook (TeX Gyre Schola, GUST Font License; see fonts/LICENSE.txt) -->
+  <link rel="preload" href="fonts/schola-sc.woff2" as="font" type="font/woff2" crossorigin>
 
-  <link rel="preload" as="image" type="image/webp"
+  <link rel="preload" as="image" type="image/webp" media="(orientation: landscape)"
         imagesrcset="images/door-1000.webp 1000w, images/door-1600.webp 1600w, images/door-2400.webp 2400w, images/door-3200.webp 3200w"
         imagesizes="(max-aspect-ratio: 7/5) 140vh, 100vw">
+  <link rel="preload" as="image" type="image/webp" media="(orientation: portrait)"
+        imagesrcset="images/door-portrait-800.webp 800w, images/door-portrait-1400.webp 1400w, images/door-portrait-2000.webp 2000w"
+        imagesizes="100vw">
 
   <style>
+    @font-face {
+      font-family: "Schola";
+      src: url("fonts/schola-sc.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
     :root {
       --green: #1f282c;
       --green-deep: #161c1f;
@@ -47,7 +57,7 @@
       margin: 0;
       background: var(--green-deep);
       color: var(--cream);
-      font-family: "Libre Caslon Text", "Big Caslon", Baskerville, Georgia, serif;
+      font-family: "Schola", "Century Schoolbook", "Century", Georgia, serif;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -150,19 +160,55 @@
     .address {
       margin: 0;
       font-weight: 400;
-      font-size: clamp(11px, 0.9vw, 13px);
-      letter-spacing: 0.28em;
-      line-height: 1.6;
-      text-transform: uppercase;
-      padding-left: 0.28em; /* balances the trailing letter-space */
+      font-size: clamp(16px, 1.25vw, 19px);
+      font-variant-caps: small-caps;
+      font-feature-settings: "smcp", "kern", "liga";
+      letter-spacing: 0.07em;
+      line-height: 1.5;
     }
     .address .street { color: var(--cream); }
-    .address .sep { color: var(--gold); margin: 0 0.9em; }
+    .address .sep { color: var(--gold); margin: 0 0.8em; }
     .address .city { color: var(--gold); }
     @media (max-width: 600px) {
-      .address { line-height: 2; }
+      .address { font-size: 16px; }
       .address span { display: block; }
       .address .sep { display: none; }
+    }
+
+    /* ---- Phones and tall screens ----
+       The photo is landscape, so on a tall screen it can't fill the whole
+       height without showing the transom above the door. Instead: crest bar
+       on top, the door and its frame edge to edge, the address underneath. */
+    @media (orientation: portrait) {
+      body { background: var(--green); }
+      main {
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        min-height: 100svh;
+        padding-top: calc(var(--bar-h) + env(safe-area-inset-top));
+      }
+      .bar { transform: none; }
+      .hero { position: relative; height: auto; flex: none; }
+      /* Full width at the photo's own proportions, but never so tall that the
+         address gets pushed below the first screen (trims the door's bottom instead). */
+      .hero img {
+        height: min(calc(100vw * 2905 / 2072), calc(100svh - var(--bar-h) - env(safe-area-inset-top) - 80px));
+        object-fit: cover;
+        object-position: center top;
+      }
+      .cue { display: none; }
+      .close {
+        flex: 1;
+        min-height: 80px;
+        padding-top: 12px;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
+        background: transparent;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        box-shadow: none;
+      }
     }
   </style>
 </head>
@@ -180,6 +226,13 @@
   <main id="top">
     <section class="hero">
       <picture>
+        <!-- Phones and other tall screens: just the door and its frame -->
+        <source media="(orientation: portrait)" type="image/webp"
+                srcset="images/door-portrait-800.webp 800w, images/door-portrait-1400.webp 1400w, images/door-portrait-2000.webp 2000w"
+                sizes="100vw">
+        <source media="(orientation: portrait)"
+                srcset="images/door-portrait-800.jpg 800w, images/door-portrait-1400.jpg 1400w, images/door-portrait-2000.jpg 2000w"
+                sizes="100vw">
         <source type="image/webp"
                 srcset="images/door-1000.webp 1000w, images/door-1600.webp 1600w, images/door-2400.webp 2400w, images/door-3200.webp 3200w"
                 sizes="(max-aspect-ratio: 7/5) 140vh, 100vw">
