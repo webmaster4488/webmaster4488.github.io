@@ -157,58 +157,33 @@
       box-shadow: 0 -12px 30px -14px rgba(0, 0, 0, 0.45);
       text-align: center;
     }
-    .address {
+    /* The quote: set like an epigraph. Quote in Century roman,
+       attribution and place in Century small capitals underneath. */
+    .quote { margin: 0; max-width: 40em; }
+    .quote blockquote {
       margin: 0;
-      font-weight: 400;
-      font-size: clamp(16px, 1.25vw, 19px);
-      font-variant-caps: small-caps;
-      font-feature-settings: "smcp", "kern", "liga";
-      letter-spacing: 0.07em;
+      font-size: clamp(14px, 1vw, 16px);
       line-height: 1.5;
+      letter-spacing: 0.01em;
+      color: var(--cream);
+      white-space: pre-line;   /* keeps the poem's line breaks */
+      text-wrap: balance;
     }
-    .address .street { color: var(--cream); }
-    .address .sep { color: var(--gold); margin: 0 0.8em; }
-    .address .city { color: var(--gold); }
-    @media (max-width: 600px) {
-      .address { font-size: 16px; }
-      .address span { display: block; }
-      .address .sep { display: none; }
+    .quote figcaption {
+      margin-top: 0.4em;
+      font-size: clamp(11px, 0.8vw, 13px);
+      font-variant-caps: small-caps;
+      font-feature-settings: "smcp", "kern";
+      letter-spacing: 0.1em;
+      line-height: 1.5;
+      color: var(--gold);
     }
 
     /* ---- Phones and tall screens ----
-       The photo is landscape, so on a tall screen it can't fill the whole
-       height without showing the transom above the door. Instead: crest bar
-       on top, the door and its frame edge to edge, the address underneath. */
+       A portrait crop of just the door and its frame fills the whole screen.
+       The crest bar and the quote stay hidden until you scroll, as on a computer. */
     @media (orientation: portrait) {
-      body { background: var(--green); }
-      main {
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-        min-height: 100svh;
-        padding-top: calc(var(--bar-h) + env(safe-area-inset-top));
-      }
-      .bar { transform: none; }
-      .hero { position: relative; height: auto; flex: none; }
-      /* Full width at the photo's own proportions, but never so tall that the
-         address gets pushed below the first screen (trims the door's bottom instead). */
-      .hero img {
-        height: min(calc(100vw * 2905 / 2072), calc(100svh - var(--bar-h) - env(safe-area-inset-top) - 80px));
-        object-fit: cover;
-        object-position: center top;
-      }
-      .cue { display: none; }
-      .close {
-        flex: 1;
-        min-height: 80px;
-        padding-top: 12px;
-        padding-bottom: calc(12px + env(safe-area-inset-bottom));
-        background: transparent;
-        -webkit-backdrop-filter: none;
-        backdrop-filter: none;
-        box-shadow: none;
-      }
+      .hero img { object-position: 50% 0%; }
     }
   </style>
 </head>
@@ -246,11 +221,34 @@
     </section>
 
     <footer class="close">
-      <h1 class="address">
-        <span class="street">"Without these friendships—life, what cauchemar!" — T.S. Eliot '10</span><span class="sep" aria-hidden="true">·</span><span class="city">Cambridge, Massachusetts</span>
-      </h1>
+      <figure class="quote">
+        <blockquote id="quote-text">“Without these friendships—life, what cauchemar!”</blockquote>
+        <figcaption id="quote-by">T. S. Eliot ’10</figcaption>
+      </figure>
     </footer>
   </main>
+
+  <script>
+    // A different quote on each visit, from members only.
+    // To add one, copy a line and change the text and name ("\n" starts a new line).
+    // Eliot lines are from "Portrait of a Lady" (1917).
+    var QUOTES = [
+      { text: "Without these friendships—life, what cauchemar!", by: "T. S. Eliot ’10" },
+      { text: "To find a friend who has these qualities,\nWho has, and gives\nThose qualities upon which friendship lives.", by: "T. S. Eliot ’10" },
+      { text: "I shall sit here, serving tea to friends.", by: "T. S. Eliot ’10" },
+      { text: "You do not know how much they mean to me, my friends", by: "T. S. Eliot ’10" }
+    ];
+    (function () {
+      var i = Math.floor(Math.random() * QUOTES.length);
+      try { // avoid showing the same quote twice in a row
+        var last = parseInt(localStorage.getItem("quote"), 10);
+        if (QUOTES.length > 1 && i === last) i = (i + 1 + Math.floor(Math.random() * (QUOTES.length - 1))) % QUOTES.length;
+        localStorage.setItem("quote", String(i));
+      } catch (e) {}
+      document.getElementById("quote-text").textContent = "“" + QUOTES[i].text + "”";
+      document.getElementById("quote-by").textContent = QUOTES[i].by;
+    })();
+  </script>
 
   <script>
     // Fade the photograph in once it has loaded
