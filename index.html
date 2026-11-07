@@ -166,9 +166,20 @@
       line-height: 1.5;
       letter-spacing: 0.01em;
       color: var(--cream);
-      white-space: pre-line;   /* keeps the poem's line breaks */
       text-wrap: balance;
     }
+    /* Lines of verse: set flush left as a centred block, closely spaced, with the
+       opening quote mark hung in the margin so the lines start on one edge.
+       A line too long for a phone wraps with a hanging indent. */
+    .quote blockquote.verse {
+      display: inline-block;
+      text-align: left;
+      line-height: 1.28;
+      text-wrap: wrap;
+    }
+    .verse .line { position: relative; display: block; padding-left: 1em; text-indent: -1em; }
+    .verse .oq { position: absolute; right: 100%; text-indent: 0; }
+    @media (max-width: 360px) { .quote blockquote { font-size: 13px; } }
     .quote figcaption {
       margin-top: 0.4em;
       font-size: clamp(11px, 0.8vw, 13px);
@@ -224,7 +235,7 @@
     <footer class="close">
       <figure class="quote">
         <blockquote id="quote-text">“Without these friendships—life, what cauchemar!”</blockquote>
-        <figcaption id="quote-by">T. S. Eliot ’10</figcaption>
+        <figcaption id="quote-by">T. S. Eliot ‘10</figcaption>
       </figure>
     </footer>
   </main>
@@ -234,10 +245,29 @@
     // To add one, copy a line and change the text and name ("\n" starts a new line).
     // Source: Eliot, "Portrait of a Lady" (1917).
     var QUOTES = [
-      { text: "Without these friendships—life, what cauchemar!", by: "T. S. Eliot ’10" },
-      { text: "To find a friend who has these qualities,\nWho has, and gives\nThose qualities upon which friendship lives.", by: "T. S. Eliot ’10" },
-      { text: "I shall sit here, serving tea to friends.", by: "T. S. Eliot ’10" }
+      { text: "Without these friendships—life, what cauchemar!", by: "T. S. Eliot ‘10" },
+      { text: "To find a friend who has these qualities,\nWho has, and gives\nThose qualities upon which friendship lives.", by: "T. S. Eliot ‘10" },
+      { text: "I shall sit here, serving tea to friends.", by: "T. S. Eliot ‘10" }
     ];
+    function showQuote(i) {
+      var el = document.getElementById("quote-text");
+      var lines = QUOTES[i].text.split("\n");
+      el.textContent = "";
+      el.className = lines.length > 1 ? "verse" : "";
+      lines.forEach(function (line, n) {
+        var span = document.createElement("span");
+        span.className = "line";
+        if (n === 0) {
+          var oq = document.createElement("span");
+          oq.className = "oq";
+          oq.textContent = "“";
+          span.appendChild(oq);
+        }
+        span.appendChild(document.createTextNode(line + (n === lines.length - 1 ? "”" : "")));
+        el.appendChild(span);
+      });
+      document.getElementById("quote-by").textContent = QUOTES[i].by;
+    }
     (function () {
       var i = Math.floor(Math.random() * QUOTES.length);
       try { // avoid showing the same quote twice in a row
@@ -245,8 +275,7 @@
         if (QUOTES.length > 1 && i === last) i = (i + 1 + Math.floor(Math.random() * (QUOTES.length - 1))) % QUOTES.length;
         localStorage.setItem("quote", String(i));
       } catch (e) {}
-      document.getElementById("quote-text").textContent = "“" + QUOTES[i].text + "”";
-      document.getElementById("quote-by").textContent = QUOTES[i].by;
+      showQuote(i);
     })();
   </script>
 
