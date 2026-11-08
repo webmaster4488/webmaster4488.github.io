@@ -48,7 +48,8 @@
       --gold: #d2a03d;
       --cream: #efe8d6;
       --bar-h: 62px;
-      --shell: #f3ecdd;
+      --shell: #f3ecdd;          /* the screen beyond the door; door slate in dark mode */
+      --paper: #f3ecdd;
       --forest: #234030;
       /* The one place the typeface is set. */
       --font: "Schola", "Century", Georgia, serif;
@@ -141,7 +142,7 @@
       letter-spacing: 0.03em;
       font-variant-caps: small-caps;
       font-feature-settings: "smcp", "kern";
-      color: var(--shell);
+      color: var(--paper);
     }
     .box {                       /* the login goes in here when it is ready */
       box-sizing: border-box;
@@ -170,7 +171,7 @@
       margin-top: 44px;
       border: 0;
       border-radius: 999px;
-      background: var(--shell);
+      background: var(--paper);
       color: var(--forest);
       font: inherit;
       font-size: 18px;
@@ -183,7 +184,7 @@
     }
     .back:hover { background: #fff8ea; }
     .back:active { transform: scale(.97); }
-    .back:focus-visible { outline: 2px solid var(--shell); outline-offset: 3px; }
+    .back:focus-visible { outline: 2px solid var(--paper); outline-offset: 3px; }
     .still .camera, .still .leaf, .still .face::after { transition: none !important; }
     .entering .cue { opacity: 0; }
     .entering .close { box-shadow: none; }
@@ -396,6 +397,18 @@
        cropped from the top. The crest bar and quote appear on scroll. */
     @media (orientation: portrait) {
       .photo { object-position: 50% 0%; }
+    }
+    /* Dark mode: the door opens onto the hall at night, in the door's own slate */
+    @media (prefers-color-scheme: dark) {
+      :root { --shell: #161c1f; }
+      .head { background: linear-gradient(#2a363b, #161c1f); }
+      .strike { background: linear-gradient(to left, #33424a, #161c1f); }
+      .hinge { background: linear-gradient(to right, #222c30, #161c1f); }
+      .box {
+        box-shadow:
+          inset 0 0 0 1px rgba(239, 232, 214, .07),
+          0 24px 60px rgba(0, 0, 0, .55);
+      }
     }
   </style>
 </head>
@@ -746,7 +759,7 @@
       later(zoomIn, OPENS + ZOOM_AFTER);
       later(function () {
         document.body.classList.add('veiled');
-        themeColor.content = '#f3ecdd';
+        themeColor.content = getComputedStyle(document.documentElement).getPropertyValue('--shell').trim();
       }, OPENS + ZOOM_AFTER + ZOOM_TIME - VEIL_TIME);
       later(goToMembers, OPENS + ZOOM_AFTER + ZOOM_TIME);
     });
