@@ -42,6 +42,14 @@
       font-display: swap;
     }
 
+    @font-face {       /* the login's typeface; see fonts/OFL-alegreya-sans.txt */
+      font-family: "Alegreya Sans";
+      src: url("fonts/alegreya-sans-latin-500.woff2") format("woff2");
+      font-weight: 500;
+      font-style: normal;
+      font-display: block;
+    }
+
     :root {
       --green: #1f282c;
       --green-deep: #161c1f;
@@ -128,15 +136,33 @@
       position: fixed;
       inset: 0;
       z-index: 20;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       background: var(--shell);
       opacity: 0;
       visibility: hidden;
       transition: opacity 1.2s ease, visibility 0s linear 1.2s;
     }
     .veiled .veil { opacity: 1; visibility: visible; transition: opacity 0.45s ease-in, visibility 0s; }
+    .veil-in {
+      display: grid;
+      place-items: center;
+      height: 100vh;
+      height: 100svh;
+      padding: 24px 16px;
+      box-sizing: border-box;
+    }
+    /* A copy of the login card, in the same place, so the page change can't be seen */
+    .box.gate { display: none; padding: 32px 24px 24px; text-align: left; font-family: "Alegreya Sans", sans-serif; font-weight: 500; }
+    .gating .box.gate { display: block; }
+    .gating .coming { display: none; }
+    .gate .fld { margin-bottom: 16px; }
+    .gate .lab { display: block; margin-bottom: 6px; font-size: 16px; line-height: 1.2; color: var(--paper); }
+    .gate .inp { display: block; height: 50px; border-radius: 12px; background: rgba(243, 236, 221, .12); }
+    .gate .go {
+      display: flex; align-items: center; justify-content: center;
+      height: 52px; margin-top: 12px; border-radius: 999px;
+      background: var(--paper); color: var(--forest);
+      font-size: 18px; line-height: 1; letter-spacing: .01em;
+    }
     .soon {
       margin: 0;
       font-size: 32px;
@@ -253,17 +279,37 @@
     .js .knocker { display: block; }
     .knocker:focus-visible { outline: 1px solid var(--gold); outline-offset: 4px; }
     .knocking .knocker { opacity: 0; pointer-events: none; }
-    @media (hover: hover) {
-      .knocker::after {
-        content: "";
-        position: absolute;
-        inset: -35%;
-        border-radius: 50%;
-        background: radial-gradient(closest-side, rgba(255, 226, 160, 0.2), transparent);
-        opacity: 0;
-        transition: opacity 0.4s ease;
-      }
-      .knocker:hover::after { opacity: 1; }
+    /* Touch it and the knocker comes loose: it pops off the door and rattles on its hinge.
+       It's a feathered copy of the photograph, invisible until then. */
+    .kn { position: absolute; inset: 0; opacity: 0; transform-origin: 50% 8%; pointer-events: none; }
+    .kn i {
+      position: absolute;
+      inset: -8%;
+      background-repeat: no-repeat;
+      -webkit-mask-image: radial-gradient(closest-side, #000 82%, transparent 100%);
+      mask-image: radial-gradient(closest-side, #000 82%, transparent 100%);
+    }
+    @keyframes kn-pop {
+      0%   { transform: none; }
+      16%  { transform: translateY(-3%) scale(1.22) rotate(-6deg); }
+      30%  { transform: translateY(-1%) scale(1.17) rotate(6deg); }
+      44%  { transform: translateY(-3%) scale(1.2) rotate(-4deg); }
+      58%  { transform: translateY(-5%) scale(1.25) rotate(3.5deg); }
+      74%  { transform: translateY(-2%) scale(1.17) rotate(-2deg); }
+      100% { transform: translateY(-2%) scale(1.18) rotate(0); }
+    }
+    @keyframes kn-rattle {
+      0%, 78%, 100% { transform: translateY(-2%) scale(1.18) rotate(0); }
+      82% { transform: translateY(-3%) scale(1.2) rotate(-3deg); }
+      86% { transform: translateY(-2%) scale(1.18) rotate(3deg); }
+      90% { transform: translateY(-3%) scale(1.19) rotate(-1.5deg); }
+      94% { transform: translateY(-2%) scale(1.18) rotate(1deg); }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .tease .kn { opacity: 1; filter: drop-shadow(0 9px 8px rgba(0, 0, 0, .6)); animation: kn-pop .85s ease-out both; }
+    }
+    @media (prefers-reduced-motion: no-preference) and (hover: hover) {
+      .knocker:hover .kn { opacity: 1; filter: drop-shadow(0 9px 8px rgba(0, 0, 0, .6)); animation: kn-pop .85s ease-out both, kn-rattle 2.6s .85s infinite; }
     }
 
     /* a fine line at the bottom inviting a scroll */
@@ -318,18 +364,28 @@
       backdrop-filter: var(--glass-blur);
       box-shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.45);
       transform: translateY(calc(-100% - 32px));
-      transition: transform 0.7s cubic-bezier(.2, .7, .2, 1);
+      transition: transform 1.25s cubic-bezier(.12, .82, .18, 1);
+      transition-timing-function: linear(0, .36 7%, .68 16%, .86 27%, .94 39%, .98 54%, .995 74%, 1);
     }
     .bar a { display: block; padding: 6px; }
     .bar img { display: block; height: 40px; width: auto; }
     @media (max-width: 600px) { :root { --bar-h: 52px; } .bar img { height: 34px; } }
-    .scrolled .bar { transform: none; }
+    .scrolled .bar, .scrolled .close { transform: none; }
+    .entering .bar { transform: translateY(calc(-100% - 32px)); transition-duration: .45s; }
+    .entering .close { transform: translateY(calc(100% + 32px)); transition-duration: .45s; }
     .scrolled .cue { opacity: 0; }
 
     /* ---- Below the photograph ---- */
+    main { min-height: calc(100vh + 140px); min-height: calc(100svh + 140px); }
     .close {
-      position: relative;
-      z-index: 1;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 10;
+      transform: translateY(calc(100% + 32px));
+      transition: transform 1.25s cubic-bezier(.12, .82, .18, 1);
+      transition-timing-function: linear(0, .36 7%, .68 16%, .86 27%, .94 39%, .98 54%, .995 74%, 1);
       box-sizing: border-box;
       display: flex;
       align-items: center;
@@ -459,7 +515,7 @@
             <div class="edge"></div>
           </div>
         </div>
-        <button type="button" class="knocker" id="knocker" aria-label="Knock"></button>
+        <button type="button" class="knocker" id="knocker" aria-label="Knock"><span class="kn"><i></i></span></button>
       </div>
       </div>
       <span class="cue" aria-hidden="true"></span>
@@ -475,23 +531,24 @@
     </footer>
   </main>
 
-  <div class="veil" id="veil"><div class="box"><p class="soon" id="soon" role="status"></p><button type="button" class="back">Back</button></div></div>
+  <div class="veil" id="veil"><div class="veil-in">
+    <div class="box coming"><p class="soon" id="soon" role="status"></p><button type="button" class="back">Back</button></div>
+    <div class="box gate" aria-hidden="true"><div class="fld"><span class="lab">Initials</span><span class="inp"></span></div><div class="fld"><span class="lab">Password</span><span class="inp"></span></div><span class="go">Enter</span></div>
+  </div></div>
 
   <script>
     // Quotes from members only, changing every 7 seconds, always in this order.
-    // They tell a story: the welcome, finding friends, what they mean, the house at
-    // ease, riding out together, the brink, standing together. Then it begins again.
     // To add one, copy a line and change the text and name ("\n" starts a new line).
     // Eliot: "Portrait of a Lady" (1917) and a Ballade (1909).
     // Hagedorn: "A Troop of the Guard", Harvard Class Poem (1907), and "Fighters" (1909).
     var QUOTES = [
       { text: "Your genial influence awaits", by: "T. S. Eliot ‘10" },
-      { text: "To find a friend who has these qualities,\nWho has, and gives\nThose qualities upon which friendship lives.", by: "T. S. Eliot ‘10" },
-      { text: "Without these friendships—life, what cauchemar!", by: "T. S. Eliot ‘10" },
       { text: "I shall sit here, serving tea to friends.", by: "T. S. Eliot ‘10" },
+      { text: "To find a friend who has these qualities,\nWho has, and gives\nThose qualities upon which friendship lives.", by: "T. S. Eliot ‘10" },
       { text: "Into the dawn, we ride, we ride,\nFellow and fellow, side by side", by: "Hermann Hagedorn ‘07" },
       { text: "Friends of the great, the high, the perilous years,\nUpon the brink of mighty things we stand", by: "Hermann Hagedorn ‘07" },
-      { text: "Fearless, to rise or fall,\nArm pressed to arm we stand", by: "Hermann Hagedorn ‘07" }
+      { text: "Fearless, to rise or fall,\nArm pressed to arm we stand", by: "Hermann Hagedorn ‘07" },
+      { text: "Without these friendships—life, what cauchemar!", by: "T. S. Eliot ‘10" }
     ];
     var quoteFigures = QUOTES.map(function (q) {
       var lines = q.text.split("\n");
@@ -553,7 +610,7 @@
 
   <script>
     // When the login is ready, put its address here and a knock will lead straight to it:
-    // var MEMBERS_URL = "https://members.44jfk.com/";
+    // var MEMBERS_URL = "https://members.44jfk.com/login";
     // Until then the zoom ends on the quiet "Coming soon" screen.
     var MEMBERS_URL = "";
 
@@ -562,6 +619,13 @@
       preconnect.rel = 'preconnect';
       preconnect.href = MEMBERS_URL;
       document.head.appendChild(preconnect);
+      if (document.fonts && document.fonts.load) document.fonts.load('500 16px "Alegreya Sans"');
+      var ahead = document.createElement('link');     // the login's font, so its words appear at once
+      ahead.rel = 'prefetch';
+      ahead.as = 'font';
+      ahead.crossOrigin = 'anonymous';
+      ahead.href = new URL('/_auth/font.woff2', MEMBERS_URL).href;
+      document.head.appendChild(ahead);
     }
 
     var camera = document.getElementById('camera');
@@ -632,6 +696,10 @@
       knocker.style.top = k[1] * rh + 'px';
       knocker.style.width = (k[2] - k[0]) * rw + 'px';
       knocker.style.height = (k[3] - k[1]) * rh + 'px';
+      var kn = knocker.querySelector('i');
+      kn.style.backgroundImage = 'url("' + photo.currentSrc + '")';
+      kn.style.backgroundSize = rw + 'px ' + rh + 'px';
+      kn.style.backgroundPosition = -(k[0] * rw - (k[2] - k[0]) * rw * .08) + 'px ' + -(k[1] * rh - (k[3] - k[1]) * rh * .08) + 'px';
     }
 
     // Fade the photograph in once it has loaded, then begin the drift.
@@ -726,7 +794,11 @@
 
     var themeColor = document.querySelector('meta[name="theme-color"]');
     function goToMembers() {
-      if (MEMBERS_URL) { location.assign(MEMBERS_URL); return; }
+      if (MEMBERS_URL) {
+        document.body.classList.add('arrived', 'gating');
+        later(function () { location.assign(MEMBERS_URL); }, 850);   // once the card has settled
+        return;
+      }
       soon.textContent = 'Coming soon';
       document.body.classList.add('arrived');
     }
@@ -739,7 +811,7 @@
       document.body.classList.add('still');
       camera.style.transform = '';
       stage.classList.remove('knocking', 'rap', 'open');
-      document.body.classList.remove('entering', 'veiled', 'arrived');
+      document.body.classList.remove('entering', 'veiled', 'arrived', 'gating');
       themeColor.content = '#1f282c';
       void camera.offsetWidth;
       document.body.classList.remove('still');
@@ -766,9 +838,15 @@
       later(goToMembers, OPENS + ZOOM_AFTER + ZOOM_TIME);
     });
     veil.addEventListener('click', function () {
-      if (document.body.classList.contains('arrived')) backToDoor();
+      if (document.body.classList.contains('arrived') && !document.body.classList.contains('gating')) backToDoor();
     });
     window.addEventListener('pageshow', function (e) { if (e.persisted) backToDoor(true); });   // coming back with the Back button
+
+    // Phones have no hover, so the knocker shows off once by itself
+    if (matchMedia('(hover: none)').matches) {
+      setTimeout(function () { knocker.classList.add('tease'); }, 3500);
+      setTimeout(function () { knocker.classList.remove('tease'); }, 4600);
+    }
 
     // Reveal the bar after the first bit of scrolling
     function onScroll() { document.body.classList.toggle('scrolled', window.scrollY > 16); }
