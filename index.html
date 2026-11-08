@@ -23,8 +23,8 @@
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-  <!-- Century Schoolbook (TeX Gyre Schola, GUST Font License; see fonts/LICENSE.txt) -->
-  <link rel="preload" href="fonts/schola-sc.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- Schibsted Grotesk (SIL Open Font License; see fonts/OFL.txt) -->
+  <link rel="preload" href="fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 
   <link rel="preload" as="image" type="image/webp" media="(orientation: landscape)"
         imagesrcset="images/door-1000.webp 1000w, images/door-1600.webp 1600w, images/door-2400.webp 2400w, images/door-3200.webp 3200w"
@@ -35,9 +35,9 @@
 
   <style>
     @font-face {
-      font-family: "Schola";
-      src: url("fonts/schola-sc.woff2") format("woff2");
-      font-weight: 400;
+      font-family: "Schibsted Grotesk";
+      src: url("fonts/schibsted-grotesk-latin-wght-normal.woff2") format("woff2");
+      font-weight: 400 900;
       font-style: normal;
       font-display: swap;
     }
@@ -47,7 +47,9 @@
       --green-deep: #161c1f;
       --gold: #d2a03d;
       --cream: #efe8d6;
-      --bar-h: 72px;
+      --bar-h: 52px;
+      /* The one place the typeface is set. */
+      --font: "Schibsted Grotesk", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
     }
 
     html { scroll-behavior: smooth; }
@@ -57,7 +59,7 @@
       margin: 0;
       background: var(--green-deep);
       color: var(--cream);
-      font-family: "Schola", "Century Schoolbook", "Century", Georgia, serif;
+      font-family: var(--font);
       -webkit-font-smoothing: antialiased;
     }
 
@@ -70,6 +72,13 @@
       overflow: hidden;
       background: var(--green-deep);
     }
+    .camera {                      /* moves in through the open door; see zoomIn() */
+      position: absolute;
+      inset: 0;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+    .entering .camera { transition: transform 1.7s cubic-bezier(.5, 0, .8, .5); }
     .stage {
       position: absolute;
       inset: 0;
@@ -97,47 +106,98 @@
     /* ---- Knocking: the door swings open ----
        The leaf is a copy of the door in the photograph, placed exactly over it by
        script and hidden until the knocker is pressed, so at rest the page is only
-       the photograph. Hinges on the left, opening inward. */
+       the photograph. It is a slab: hinged on the left, opening inward, turning about
+       the inner corner of its hinge side. Behind it are the depth of the frame and a
+       dim hall. placeDoor() sets --thick, --depth and --seen. */
     .doorway {
       position: absolute;
       overflow: hidden;
       visibility: hidden;
+      will-change: transform;   /* keeps the page's layers the same before and during a knock */
     }
     .knocking .doorway { visibility: visible; }
-    .inside, .leaf { position: absolute; inset: 0; }
+    .inside, .leaf, .face { position: absolute; inset: 0; }
     .inside {
-      background: radial-gradient(ellipse 75% 45% at 50% 28%, #3a3a2d 0%, var(--green) 58%, #11171a 100%);
+      background:
+        radial-gradient(52% calc(var(--seen) * .3) at 62% calc(var(--seen) * .08), rgba(210, 160, 61, .07), transparent),
+        linear-gradient(to right, rgba(0, 0, 0, .38), transparent 42%, transparent 74%, rgba(239, 232, 214, .035)),
+        linear-gradient(var(--green-deep), #0b0f11 calc(var(--seen) * .8));
     }
-    .inside img {
-      position: absolute;
-      left: 50%;
-      width: 40%;
-      height: auto;
+    /* Inside: one solid colour, which the login page opens on too */
+    .veil {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--green);
       opacity: 0;
-      transform: translate(-50%, -50%);
-      transition: opacity 0.7s ease;
+      visibility: hidden;
+      transition: opacity 1.2s ease, visibility 0s linear 1.2s;
     }
-    .open .inside img { opacity: 1; transition: opacity 1s ease 0.7s; }
-    .leaf {
-      background-color: #1a2930;
-      background-repeat: no-repeat;
+    .veiled .veil { opacity: 1; visibility: visible; transition: opacity 0.75s ease-in, visibility 0s; }
+    .soon {
+      margin: 0;
+      font-size: clamp(17px, 1.4vw, 20px);
+      line-height: 1;
+      color: var(--gold);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .arrived .soon { opacity: 1; transition: opacity 1.1s ease 0.15s; }
+    .still .camera, .still .leaf, .still .face::after { transition: none !important; }
+    .entering .cue { opacity: 0; }
+    .jamb { position: absolute; }   /* the frame's inner faces, running back from the photograph */
+    .head {
+      left: 0; right: 0; top: 0;
+      height: var(--depth);
+      transform-origin: 50% 0;
+      transform: rotateX(-90deg);
+      background: linear-gradient(rgba(239, 232, 214, .27), rgba(239, 232, 214, .13)), #0b0f11;
+    }
+    .strike, .hinge { top: 0; bottom: 0; width: var(--depth); }
+    .strike {
+      right: 0;
+      transform-origin: 100% 50%;
+      transform: rotateY(-90deg);
+      background: linear-gradient(to left, rgba(239, 232, 214, .46), rgba(239, 232, 214, .2)), #0b0f11;
+    }
+    .hinge {
+      left: 0;
       transform-origin: 0 50%;
-      transition: transform 1.7s cubic-bezier(.5, .05, .2, 1);
+      transform: rotateY(90deg);
+      background: linear-gradient(to right, rgba(239, 232, 214, .18), rgba(239, 232, 214, .08)), #0b0f11;
     }
-    .leaf::after {   /* the door falls into shade as it turns away */
+    .leaf {
+      transform-style: preserve-3d;
+      transform-origin: 0 50% calc(var(--thick) * -1);
+      transition: transform 2.8s cubic-bezier(.45, .05, .32, 1);
+    }
+    .face { overflow: hidden; background: #1d2a2f; }
+    .face img { position: absolute; max-width: none; object-fit: cover; }
+    .face::after {   /* the light falls away as it turns, soonest at the far side */
       content: "";
       position: absolute;
       inset: 0;
-      background: #000;
+      background: linear-gradient(to right, rgba(0, 0, 0, .34), rgba(0, 0, 0, .8));
       opacity: 0;
-      transition: opacity 1.7s ease;
+      transition: opacity 2.8s cubic-bezier(.45, .05, .32, 1);
     }
-    .open .leaf { transform: rotateY(84deg); }
-    .open .leaf::after { opacity: 0.4; }
-    .rap .leaf { animation: rap 0.6s ease-in-out; }
-    @keyframes rap {
-      0%, 30%, 60%, 100% { transform: none; }
-      12%, 42%           { transform: rotateY(0.7deg); }
+    .edge {   /* the hinge side of the slab, which comes round to face the street */
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: var(--thick);
+      transform-origin: 0 50%;
+      transform: rotateY(90deg);
+      background: linear-gradient(to right, #27343a, #141b1e);
+    }
+    .open .leaf { transform: rotateY(82deg); }
+    .open .face::after { opacity: 1; }
+    .rap .leaf { animation: rap 1s linear; }
+    @keyframes rap {   /* three raps; their times match RAPS in the script */
+      0%, 12%, 38%, 50%, 76%, 88%, 100% { transform: none; }
+      2%, 40%, 78%                      { transform: rotateY(.35deg); }
     }
     .knocker {
       display: none;
@@ -150,7 +210,7 @@
     }
     .js .knocker { display: block; }
     .knocker:focus-visible { outline: 1px solid var(--gold); outline-offset: 4px; }
-    .knocking .knocker { visibility: hidden; }
+    .knocking .knocker { opacity: 0; pointer-events: none; }
     @media (hover: hover) {
       .knocker::after {
         content: "";
@@ -192,7 +252,11 @@
     @media (prefers-reduced-motion: reduce) {
       .cue::after { animation: none; transform: none; opacity: 0.6; }
       .stage.drift, .rap .leaf { animation: none; }
-      .leaf, .leaf::after, .inside img, .open .inside img { transition: none; }
+      /* no swing and no zoom: the door dissolves and the screen fades up */
+      .leaf { transition: opacity 0.8s ease; }
+      .open .leaf { transform: none; opacity: 0; }
+      .face::after, .open .face::after { transition: none; opacity: 0; }
+      .entering .camera { transition: none; }
     }
 
     /* ---- Bar that appears once you scroll ---- */
@@ -215,8 +279,8 @@
       transition: transform 0.7s cubic-bezier(.2, .7, .2, 1);
     }
     .bar a { display: block; padding: 6px; }
-    .bar img { display: block; height: 46px; width: auto; }
-    @media (max-width: 600px) { :root { --bar-h: 60px; } .bar img { height: 38px; } }
+    .bar img { display: block; height: 32px; width: auto; }
+    @media (max-width: 600px) { :root { --bar-h: 44px; } .bar img { height: 28px; } }
     .scrolled .bar { transform: none; }
     .scrolled .cue { opacity: 0; }
 
@@ -235,8 +299,7 @@
       box-shadow: 0 -12px 30px -14px rgba(0, 0, 0, 0.45);
       text-align: center;
     }
-    /* The quote: set like an epigraph. Quote in Century roman,
-       attribution in Century small capitals underneath.
+    /* The quote: set like an epigraph, with the attribution in gold underneath.
        The quotes share one grid cell, so the footer is always as tall as the
        longest one and the page doesn't jump as they rotate. */
     .quotes {
@@ -261,7 +324,6 @@
       margin: 0;
       font-size: clamp(14px, 1vw, 16px);
       line-height: 1.5;
-      letter-spacing: 0.01em;
       color: var(--cream);
       text-wrap: balance;
     }
@@ -279,10 +341,9 @@
     @media (max-width: 360px) { .quote blockquote { font-size: 13px; } }
     .quote figcaption {
       margin-top: 0.4em;
-      font-size: clamp(11px, 0.8vw, 13px);
-      font-variant-caps: small-caps;
-      font-feature-settings: "smcp", "kern";
-      letter-spacing: 0.1em;
+      font-size: clamp(12px, 0.85vw, 13px);
+      font-weight: 500;
+      letter-spacing: 0.01em;
       line-height: 1.5;
       color: var(--gold);
     }
@@ -309,6 +370,7 @@
 
   <main id="top">
     <section class="hero">
+      <div class="camera" id="camera">
       <div class="stage" id="stage">
         <picture>
           <!-- Phones and other tall screens: the whole doorway, centred on the door -->
@@ -327,11 +389,21 @@
                width="4691" height="3351"
                alt="The green front door of 44 JFK Street, with a bronze knocker and brass numerals, framed by white columns.">
         </picture>
-        <div class="doorway" id="doorway" aria-hidden="true">
-          <div class="inside"><img src="images/crest.webp" alt=""></div>
-          <div class="leaf" id="leaf"></div>
+        <div class="doorway" id="doorway">
+          <div class="inside"></div>
+          <div class="jamb head"></div>
+          <div class="jamb strike"></div>
+          <div class="jamb hinge"></div>
+          <div class="leaf" id="leaf">
+            <div class="face" id="face">
+              <img alt="" decoding="sync">
+              <img alt="" decoding="sync">
+            </div>
+            <div class="edge"></div>
+          </div>
         </div>
         <button type="button" class="knocker" id="knocker" aria-label="Knock"></button>
+      </div>
       </div>
       <span class="cue" aria-hidden="true"></span>
     </section>
@@ -345,6 +417,8 @@
       </div>
     </footer>
   </main>
+
+  <div class="veil" id="veil"><p class="soon" id="soon" role="status"></p></div>
 
   <script>
     // Quotes from members only, changing every 7 seconds.
@@ -429,22 +503,36 @@
   </script>
 
   <script>
-    // When the members area is ready, put its address here and a knock will lead to it:
+    // When the login is ready, put its address here and a knock will lead straight to it:
     // var MEMBERS_URL = "https://members.44jfk.com/";
+    // Until then the zoom ends on the quiet "Coming soon" screen.
     var MEMBERS_URL = "";
 
+    if (MEMBERS_URL) {
+      var preconnect = document.createElement('link');
+      preconnect.rel = 'preconnect';
+      preconnect.href = MEMBERS_URL;
+      document.head.appendChild(preconnect);
+    }
+
+    var camera = document.getElementById('camera');
+    var veil = document.getElementById('veil');
     var stage = document.getElementById('stage');
     var photo = stage.querySelector('.photo');
     var doorway = document.getElementById('doorway');
     var leaf = document.getElementById('leaf');
+    var face = document.getElementById('face');
+    var soon = document.getElementById('soon');
     var knocker = document.getElementById('knocker');
 
-    // Where the door's corners and the knocker sit in each photograph,
-    // as fractions of its width and height.
+    // Where the door's painted edges and the knocker sit in each photograph,
+    // as fractions of its width and height. The brass strip around it belongs to the frame.
     var DOORS = {
-      landscape: { tl: [.3150, .2150], tr: [.6927, .2125], br: [.6933, 1], bl: [.3165, 1], knocker: [.483, .31, .529, .422] },
-      portrait:  { tl: [.1296, .2150], tr: [.8677, .2122], br: [.8692, 1], bl: [.1328, 1], knocker: [.455, .31, .548, .422] }
+      landscape: { tl: [.3175, .2174], tr: [.6909, .2151], br: [.6922, 1], bl: [.3180, 1], knocker: [.483, .31, .529, .422] },
+      portrait:  { tl: [.1341, .2175], tr: [.8649, .2149], br: [.8677, 1], bl: [.1353, 1], knocker: [.455, .31, .548, .422] }
     };
+    var EYE = .52;   // the camera's eye level, as a fraction of the photograph's height
+    var opening;     // the doorway on this screen, set by placeDoor() and used by zoomIn()
 
     // Lay the door and knocker over the photograph as it is cropped on this screen
     function placeDoor() {
@@ -454,24 +542,41 @@
       var door = ih > iw ? DOORS.portrait : DOORS.landscape;
       var scale = Math.max(W / iw, H / ih), rw = iw * scale, rh = ih * scale;
       var ox = (W - rw) * parseFloat(getComputedStyle(photo).objectPosition) / 100;
-      var left = door.tl[0] * rw, top = door.tr[1] * rh;
-      var width = door.br[0] * rw - left;
-      var height = rh * 1.5 - top;              // runs past the photo so the swinging edge never shows a gap
+      // A whole-pixel box, so the copy of the photograph lands on the very pixels of the original
+      var left = Math.floor(ox + Math.min(door.tl[0], door.bl[0]) * rw), top = Math.floor(Math.min(door.tl[1], door.tr[1]) * rh);
+      var width = Math.ceil(ox + Math.max(door.tr[0], door.br[0]) * rw) - left;
+      var height = Math.ceil(rh * 1.5) - top;   // runs past the photo so the swinging edge never shows a gap
       var seen = Math.min(H, rh) - top;
+      opening = { left: left, top: top, width: width, seen: seen };
 
-      function corner(p, y) { return (p[0] * rw - left) + 'px ' + (y === undefined ? p[1] * rh - top : y) + 'px'; }
-      doorway.style.left = ox + left + 'px';
+      function corner(p, y) { return (ox + p[0] * rw - left) + 'px ' + (y === undefined ? p[1] * rh - top : y) + 'px'; }
+      var outline = 'polygon(' + [corner(door.tl), corner(door.tr), corner(door.br, height), corner(door.bl, height)].join(',') + ')';
+      doorway.style.left = left + 'px';
       doorway.style.top = top + 'px';
       doorway.style.width = width + 'px';
       doorway.style.height = height + 'px';
-      doorway.style.perspective = width * 2.2 + 'px';
-      doorway.style.perspectiveOrigin = '50% ' + seen * 0.45 + 'px';
-      doorway.style.clipPath = 'polygon(' + [corner(door.tl), corner(door.tr), corner(door.br, height), corner(door.bl, height)].join(',') + ')';
+      doorway.style.perspective = width * 2.3 + 'px';
+      doorway.style.perspectiveOrigin = '50% ' + (rh * EYE - top) + 'px';
+      doorway.style.clipPath = outline;
+      doorway.style.setProperty('--thick', width * .042 + 'px');
+      doorway.style.setProperty('--depth', width * .14 + 'px');
+      doorway.style.setProperty('--seen', seen + 'px');
 
-      leaf.style.backgroundImage = 'url("' + photo.currentSrc + '")';
-      leaf.style.backgroundSize = rw + 'px ' + rh + 'px';
-      leaf.style.backgroundPosition = -left + 'px ' + -top + 'px';
-      doorway.querySelector('img').style.top = seen * 0.44 + 'px';
+      // The leaf shows the same photograph at its full width, as parts of the door lie off
+      // the screen until it turns; a whole-pixel box keeps it on the original's pixels. The
+      // second copy, flipped, carries the panels on below the bottom of the picture.
+      var imgs = face.querySelectorAll('img');
+      var boxLeft = Math.floor(ox + 1e-6);
+      for (var i = 0; i < 2; i++) {
+        if (imgs[i].getAttribute('src') !== photo.currentSrc) imgs[i].src = photo.currentSrc;
+        imgs[i].style.width = Math.floor(rw + 1e-6) + 'px';
+        imgs[i].style.height = rh + 'px';
+        imgs[i].style.objectPosition = ox - boxLeft + 'px 0';
+        imgs[i].style.left = boxLeft - left + 'px';
+        imgs[i].style.top = (i ? rh : 0) - top + 'px';
+      }
+      imgs[1].style.transform = 'scaleY(-1)';
+      face.style.clipPath = outline;
 
       var k = door.knocker;
       knocker.style.left = ox + k[0] * rw + 'px';
@@ -488,22 +593,129 @@
     if (photo.complete) show();
     window.addEventListener('resize', placeDoor);
 
-    // Knock twice, swing the door open, then go in (or close again)
-    var knocking = false;
-    function shut() { stage.classList.remove('knocking', 'rap', 'open'); knocking = false; }
+    // The knocker's sound, made here rather than played from a file: three strikes of
+    // brass on a wooden door, then the latch. All times are in seconds after "start".
+    var RAPS = [0, 0.38, 0.76];
+    var LATCH = 1.42;
+    function playKnock(ctx, start) {
+      var out = ctx.createGain();
+      out.gain.value = 0.15;
+      out.connect(ctx.destination);
+
+      var noise = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.25), ctx.sampleRate);
+      var samples = noise.getChannelData(0);
+      for (var i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
+
+      function fade(t, amp, length) {       // a sharp start, then a natural decay
+        var g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(amp, t + 0.0006);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + length);
+        g.connect(out);
+        return g;
+      }
+      function tone(t, hz, amp, length, drop) {
+        var o = ctx.createOscillator();
+        o.frequency.setValueAtTime(hz * (drop || 1), t);
+        o.frequency.exponentialRampToValueAtTime(hz, t + 0.014);
+        o.connect(fade(t, amp, length));
+        o.start(t);
+        o.stop(t + length + 0.01);
+      }
+      function hiss(t, hz, q, amp, length) {
+        var s = ctx.createBufferSource(), f = ctx.createBiquadFilter();
+        s.buffer = noise;
+        f.type = 'bandpass';
+        f.frequency.value = hz;
+        f.Q.value = q;
+        s.connect(f);
+        f.connect(fade(t, amp, length));
+        s.start(t, 0, length + 0.01);
+      }
+      function rap(t, force, tune) {
+        hiss(t, 3800, 0.7, 1.1 * force, 0.016);          // the instant of contact
+        hiss(t, 320, 0.9, 0.4 * force, 0.07);            // the slap of the door
+        [[1320, 0.2, 0.12], [2140, 0.27, 0.1], [3260, 0.23, 0.075], [4710, 0.16, 0.055], [6830, 0.08, 0.04]]
+          .forEach(function (p) { tone(t, p[0] * tune, p[1] * force, p[2]); });      // brass: bright, inharmonic, quick
+        [[94, 0.26, 0.24], [168, 0.26, 0.17], [263, 0.26, 0.11], [431, 0.2, 0.07], [690, 0.11, 0.045]]
+          .forEach(function (p) { tone(t, p[0] * tune, p[1] * force, p[2], 1.14); }); // wood: low, hollow, short
+      }
+      [[1, 1], [0.84, 0.985], [0.92, 1.01]].forEach(function (r, n) { rap(start + RAPS[n], r[0], r[1]); });
+
+      hiss(start + LATCH, 2600, 2, 0.26, 0.02);          // the latch lifting, very quietly
+      hiss(start + LATCH + 0.055, 3400, 2.5, 0.16, 0.016);
+      tone(start + LATCH + 0.055, 210, 0.16, 0.06, 1.1);
+    }
+
+    var sound;
+    function knockSound() {        // made inside the press, as iPhones insist; silence if it can't be
+      try {
+        var Context = window.AudioContext || window.webkitAudioContext;
+        if (!Context) return;
+        sound = sound || new Context();
+        if (sound.resume) sound.resume();
+        playKnock(sound, sound.currentTime + 0.03);
+      } catch (e) {}
+    }
+
+    // Knock three times, swing the door open, move in through it, and arrive.
+    var OPENS = 1500, ZOOM_AFTER = 1300, ZOOM_TIME = 1700, VEIL_TIME = 750, HOLD = 5000;
+    var calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var knocking = false, timers = [];
+    function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+    // Carry the centre of the open doorway to the centre of the screen, close enough
+    // that the doorway fills it.
+    function zoomIn() {
+      if (calm || !opening) return;
+      var W = stage.offsetWidth, H = stage.offsetHeight;
+      var s = Math.max(2.2, Math.max(W / opening.width, H / opening.seen) * 1.35);
+      var x = W / 2 - s * (opening.left + opening.width / 2);
+      var y = H / 2 - s * (opening.top + opening.seen / 2);
+      camera.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')';
+    }
+
+    function goToMembers() {
+      if (MEMBERS_URL) { location.assign(MEMBERS_URL); return; }
+      soon.textContent = 'Coming soon';
+      document.body.classList.add('arrived');
+      later(backToDoor, HOLD);
+    }
+
+    // Put the door back unseen, behind the solid screen, then let that screen fade away.
+    function backToDoor(instant) {
+      timers.forEach(clearTimeout);
+      timers = [];
+      if (instant === true) veil.style.transition = 'none';
+      document.body.classList.add('still');
+      camera.style.transform = '';
+      stage.classList.remove('knocking', 'rap', 'open');
+      document.body.classList.remove('entering', 'veiled', 'arrived');
+      void camera.offsetWidth;
+      document.body.classList.remove('still');
+      veil.style.transition = '';
+      knocking = false;
+    }
+
     knocker.addEventListener('click', function () {
       if (knocking) return;
       knocking = true;
+      soon.textContent = '';
+      knockSound();
       stage.classList.add('knocking', 'rap');
-      setTimeout(function () { stage.classList.remove('rap'); stage.classList.add('open'); }, 650);
-      if (MEMBERS_URL) {
-        setTimeout(function () { location.href = MEMBERS_URL; }, 2900);
-      } else {
-        setTimeout(function () { stage.classList.remove('open'); }, 4800);
-        setTimeout(shut, 6600);
-      }
+      document.body.classList.add('entering');
+      later(function () {
+        stage.classList.remove('rap');
+        stage.classList.add('open');
+      }, OPENS);
+      later(zoomIn, OPENS + ZOOM_AFTER);
+      later(function () { document.body.classList.add('veiled'); }, OPENS + ZOOM_AFTER + ZOOM_TIME - VEIL_TIME);
+      later(goToMembers, OPENS + ZOOM_AFTER + ZOOM_TIME);
     });
-    window.addEventListener('pageshow', function (e) { if (e.persisted) shut(); });   // coming back with the Back button
+    veil.addEventListener('click', function () {
+      if (document.body.classList.contains('arrived')) backToDoor();
+    });
+    window.addEventListener('pageshow', function (e) { if (e.persisted) backToDoor(true); });   // coming back with the Back button
 
     // Reveal the bar after the first bit of scrolling
     function onScroll() { document.body.classList.toggle('scrolled', window.scrollY > 16); }
