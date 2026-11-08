@@ -23,8 +23,8 @@
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-  <!-- Schibsted Grotesk (SIL Open Font License; see fonts/OFL.txt) -->
-  <link rel="preload" href="fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- TeX Gyre Schola, GUST Font License; see fonts/LICENSE.txt -->
+  <link rel="preload" href="fonts/schola-sc.woff2" as="font" type="font/woff2" crossorigin>
 
   <link rel="preload" as="image" type="image/webp" media="(orientation: landscape)"
         imagesrcset="images/door-1000.webp 1000w, images/door-1600.webp 1600w, images/door-2400.webp 2400w, images/door-3200.webp 3200w"
@@ -35,9 +35,9 @@
 
   <style>
     @font-face {
-      font-family: "Schibsted Grotesk";
-      src: url("fonts/schibsted-grotesk-latin-wght-normal.woff2") format("woff2");
-      font-weight: 400 900;
+      font-family: "Schola";
+      src: url("fonts/schola-sc.woff2") format("woff2");
+      font-weight: 400;
       font-style: normal;
       font-display: swap;
     }
@@ -47,9 +47,9 @@
       --green-deep: #161c1f;
       --gold: #d2a03d;
       --cream: #efe8d6;
-      --bar-h: 52px;
+      --bar-h: 62px;
       /* The one place the typeface is set. */
-      --font: "Schibsted Grotesk", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+      --font: "Schola", "Century", Georgia, serif;
     }
 
     html { scroll-behavior: smooth; }
@@ -134,8 +134,11 @@
     .veiled .veil { opacity: 1; visibility: visible; transition: opacity 0.45s ease-in, visibility 0s; }
     .soon {
       margin: 0;
-      font-size: clamp(17px, 1.4vw, 20px);
+      font-size: clamp(16px, 1.3vw, 20px);
       line-height: 1;
+      letter-spacing: 0.06em;
+      font-variant-caps: small-caps;
+      font-feature-settings: "smcp", "kern";
       color: var(--green);
       opacity: 0;
       transition: opacity 0.4s ease;
@@ -275,8 +278,8 @@
       transition: transform 0.7s cubic-bezier(.2, .7, .2, 1);
     }
     .bar a { display: block; padding: 6px; }
-    .bar img { display: block; height: 32px; width: auto; }
-    @media (max-width: 600px) { :root { --bar-h: 44px; } .bar img { height: 28px; } }
+    .bar img { display: block; height: 40px; width: auto; }
+    @media (max-width: 600px) { :root { --bar-h: 52px; } .bar img { height: 34px; } }
     .scrolled .bar { transform: none; }
     .scrolled .cue { opacity: 0; }
 
@@ -295,7 +298,8 @@
       box-shadow: 0 -12px 30px -14px rgba(0, 0, 0, 0.45);
       text-align: center;
     }
-    /* The quote: set like an epigraph, with the attribution in gold underneath.
+    /* The quote: set like an epigraph. Quote in Century roman,
+       attribution in Century small capitals underneath.
        The quotes share one grid cell, so the footer is always as tall as the
        longest one and the page doesn't jump as they rotate. */
     .quotes {
@@ -320,6 +324,7 @@
       margin: 0;
       font-size: clamp(14px, 1vw, 16px);
       line-height: 1.5;
+      letter-spacing: 0.01em;
       color: var(--cream);
       text-wrap: balance;
     }
@@ -337,9 +342,10 @@
     @media (max-width: 360px) { .quote blockquote { font-size: 13px; } }
     .quote figcaption {
       margin-top: 0.4em;
-      font-size: clamp(12px, 0.85vw, 13px);
-      font-weight: 500;
-      letter-spacing: 0.01em;
+      font-size: clamp(11px, 0.8vw, 13px);
+      font-variant-caps: small-caps;
+      font-feature-settings: "smcp", "kern";
+      letter-spacing: 0.1em;
       line-height: 1.5;
       color: var(--gold);
     }
@@ -407,7 +413,7 @@
     <footer class="close">
       <div class="quotes" id="quotes">
         <figure class="quote on">
-          <blockquote>“Without these friendships—life, what cauchemar!”</blockquote>
+          <blockquote>“Your genial influence awaits”</blockquote>
           <figcaption>T. S. Eliot ‘10</figcaption>
         </figure>
       </div>
@@ -417,15 +423,17 @@
   <div class="veil" id="veil"><p class="soon" id="soon" role="status"></p></div>
 
   <script>
-    // Quotes from members only, changing every 7 seconds.
+    // Quotes from members only, changing every 7 seconds, always in this order.
+    // They tell a story: the welcome, finding friends, what they mean, the house at
+    // ease, riding out together, the brink, standing together. Then it begins again.
     // To add one, copy a line and change the text and name ("\n" starts a new line).
     // Eliot: "Portrait of a Lady" (1917) and a Ballade (1909).
     // Hagedorn: "A Troop of the Guard", Harvard Class Poem (1907), and "Fighters" (1909).
     var QUOTES = [
-      { text: "Without these friendships—life, what cauchemar!", by: "T. S. Eliot ‘10" },
-      { text: "To find a friend who has these qualities,\nWho has, and gives\nThose qualities upon which friendship lives.", by: "T. S. Eliot ‘10" },
-      { text: "I shall sit here, serving tea to friends.", by: "T. S. Eliot ‘10" },
       { text: "Your genial influence awaits", by: "T. S. Eliot ‘10" },
+      { text: "To find a friend who has these qualities,\nWho has, and gives\nThose qualities upon which friendship lives.", by: "T. S. Eliot ‘10" },
+      { text: "Without these friendships—life, what cauchemar!", by: "T. S. Eliot ‘10" },
+      { text: "I shall sit here, serving tea to friends.", by: "T. S. Eliot ‘10" },
       { text: "Into the dawn, we ride, we ride,\nFellow and fellow, side by side", by: "Hermann Hagedorn ‘07" },
       { text: "Friends of the great, the high, the perilous years,\nUpon the brink of mighty things we stand", by: "Hermann Hagedorn ‘07" },
       { text: "Fearless, to rise or fall,\nArm pressed to arm we stand", by: "Hermann Hagedorn ‘07" }
@@ -465,17 +473,7 @@
       box.textContent = "";
       quoteFigures.forEach(function (fig) { box.appendChild(fig); });
 
-      // Shuffled, so every quote appears once before any repeats
-      var order = QUOTES.map(function (q, i) { return i; });
-      for (var n = order.length - 1; n > 0; n--) {
-        var r = Math.floor(Math.random() * (n + 1));
-        var swap = order[n]; order[n] = order[r]; order[r] = swap;
-      }
-      try { // don't open with the quote that opened the last visit
-        if (order[0] === parseInt(localStorage.getItem("quote"), 10)) order.push(order.shift());
-        localStorage.setItem("quote", String(order[0]));
-      } catch (e) {}
-      showQuote(order[0]);
+      showQuote(0);
 
       // Change only while the quote is on screen, so the first one seen gets its full
       // time, and hold it while the pointer rests on it.
@@ -483,8 +481,8 @@
       function run(on) {
         clearInterval(timer);
         if (on) timer = setInterval(function () {
-          at = (at + 1) % order.length;
-          showQuote(order[at]);
+          at = (at + 1) % QUOTES.length;
+          showQuote(at);
         }, 7000);
       }
       if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
