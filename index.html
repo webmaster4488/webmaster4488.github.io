@@ -61,6 +61,13 @@
       --glass: rgba(31, 40, 44, 0.57);   /* the top and bottom bars match */
       --glass-blur: blur(18px) saturate(1.3);
       --forest: #234030;
+      /* The hall beyond the door. Its far wall is --shell exactly. */
+      --floor-near: #bdb097; --floor-far: #ddd3bf;
+      --ceil-near: #d8cfbd; --ceil-far: #e9e1d0;
+      --side-near: #cfc5b1; --side-far: #e6ddcb;
+      --head-near: #c7c2b6; --head-far: #a9a497;
+      --strike-near: #f1ede3; --strike-far: #cbc5b7;
+      --hinge-near: #d6d1c5; --hinge-far: #b4aea1;
       /* The one place the typeface is set. */
       --font: "Schola", "Century", Georgia, serif;
     }
@@ -85,19 +92,12 @@
       overflow: hidden;
       background: var(--green-deep);
     }
-    .camera {                      /* moves in through the open door; see zoomIn() */
-      position: absolute;
-      inset: 0;
-      transform-origin: 0 0;
-      will-change: transform;
-    }
-    .entering .camera { transition: transform 1s cubic-bezier(.55, 0, .7, .4); }
     .stage {
       position: absolute;
       inset: 0;
       transform-origin: 50% 0;     /* the drift keeps the top edge fixed */
     }
-    .photo {
+    .photo, .wall {
       display: block;
       width: 100%;
       height: 100%;
@@ -116,21 +116,36 @@
       to   { transform: scale(1.03); }
     }
 
-    /* ---- Knocking: the door swings open ----
-       The leaf is a copy of the door in the photograph, placed exactly over it by
-       script and hidden until the knocker is pressed, so at rest the page is only
-       the photograph. It is a slab: hinged on the left, opening inward, turning about
-       the inner corner of its hinge side. Behind it are the depth of the frame and
-       plain cream. placeDoor() sets --thick, --depth and --seen. */
+    /* ---- Knocking: the door swings open and you walk through it ----
+       A real 3D scene laid exactly over the photograph and hidden until the knocker
+       is pressed, so at rest the page is only the photograph. Everything in it is
+       placed by placeDoor(), and everything at z = 0 lands on the photograph's own pixels.
+       .doorway holds the perspective (the eye). .camera is the world, which moves toward
+       the eye to walk in. In it: a hall of plain planes, the frame's jambs and head, the
+       door as a slab, and a copy of the photograph as the wall, with the door's shape cut
+       out of it. Nothing from .camera to a face may use overflow, clip-path, filter or
+       opacity, which would flatten it; only the faces themselves are clipped. */
     .doorway {
       position: absolute;
-      overflow: hidden;
+      inset: 0;
       visibility: hidden;
       will-change: transform;   /* keeps the page's layers the same before and during a knock */
     }
     .knocking .doorway { visibility: visible; }
-    .inside, .leaf, .face { position: absolute; inset: 0; }
-    .inside { background: var(--shell); }   /* the door opens straight onto the cream screen beyond it */
+    .open .doorway { background: var(--shell); }
+    .camera, .leaf { position: absolute; transform-style: preserve-3d; }
+    .camera { inset: 0; will-change: transform; }
+    .entering .camera { transition: transform 1.35s cubic-bezier(.5, 0, .3, 1); }   /* ZOOM_TIME */
+    .wall { position: absolute; left: 0; top: 0; width: 100%; height: 100%; max-width: none; }
+    /* Each plane is a small square scaled up by placeDoor(), so it costs almost no memory */
+    .plane { position: absolute; left: 0; top: 0; width: 100px; height: 100px; transform-origin: 0 0; }
+    .far   { background: var(--shell); }
+    .floor { background: linear-gradient(var(--floor-near), var(--floor-far)); }
+    .ceil  { background: linear-gradient(var(--ceil-near), var(--ceil-far)); }
+    .side  { background: linear-gradient(to right, var(--side-near), var(--side-far)); }
+    .head   { background: linear-gradient(var(--head-near), var(--head-far)); }
+    .strike { background: linear-gradient(to right, var(--strike-near), var(--strike-far)); }
+    .hinge  { background: linear-gradient(to right, var(--hinge-near), var(--hinge-far)); }
     /* Inside: solid cream, which the login page should open on too */
     .veil {
       position: fixed;
@@ -216,41 +231,24 @@
     .still .camera, .still .leaf, .still .face::after { transition: none !important; }
     .entering .cue { opacity: 0; }
     .entering .close { box-shadow: none; }
-    .jamb { position: absolute; }   /* the frame's inner faces, running back from the photograph */
-    .head {
-      left: 0; right: 0; top: 0;
-      height: var(--depth);
-      transform-origin: 50% 0;
-      transform: rotateX(-90deg);
-      background: linear-gradient(#d6d3cb, var(--shell));
-    }
-    .strike, .hinge { top: 0; bottom: 0; width: var(--depth); }
-    .strike {
-      right: 0;
-      transform-origin: 100% 50%;
-      transform: rotateY(-90deg);
-      background: linear-gradient(to left, #cfccc4, var(--shell));
-    }
-    .hinge {
-      left: 0;
-      transform-origin: 0 50%;
-      transform: rotateY(90deg);
-      background: linear-gradient(to right, #c9c6be, var(--shell));
-    }
     .leaf {
-      transform-style: preserve-3d;
-      transform-origin: 0 50% calc(var(--thick) * -1);
-      transition: transform 1.4s cubic-bezier(.45, .05, .32, 1);
+      transform-origin: 0 50% calc(var(--thick) * -1);   /* the inner corner of the hinge side */
+      will-change: transform;
+      transition: transform 1.05s cubic-bezier(.5, 0, .22, 1);
     }
-    .face { overflow: hidden; background: #1d2a2f; }
+    .face { position: absolute; inset: 0; overflow: hidden; background: #1d2a2f; }
     .face img { position: absolute; max-width: none; object-fit: cover; }
-    .face::after {   /* the light falls away as it turns, soonest at the far side */
+    .face::after {   /* the street's light leaves the door as it turns, from the far side inward */
       content: "";
       position: absolute;
-      inset: 0;
-      background: linear-gradient(to right, rgba(0, 0, 0, .34), rgba(0, 0, 0, .8));
+      top: 0;
+      bottom: 0;
+      left: -200%;
+      width: 300%;
+      background: linear-gradient(to right, rgba(0, 0, 0, .3) 40%, rgba(0, 0, 0, .78) 66%, rgba(0, 0, 0, .86));
       opacity: 0;
-      transition: opacity 1.4s cubic-bezier(.45, .05, .32, 1);
+      transform: translateX(34%);
+      transition: opacity 1.05s cubic-bezier(.5, 0, .22, 1), transform 1.05s cubic-bezier(.5, 0, .22, 1);
     }
     .edge {   /* the hinge side of the slab, which comes round to face the street */
       position: absolute;
@@ -258,10 +256,10 @@
       width: var(--thick);
       transform-origin: 0 50%;
       transform: rotateY(90deg);
-      background: linear-gradient(to right, #27343a, #141b1e);
+      background: linear-gradient(to right, #46565c, #1f2a2e);
     }
-    .open .leaf { transform: rotateY(82deg); }
-    .open .face::after { opacity: 1; }
+    .open .leaf { transform: rotateY(88deg); }
+    .open .face::after { opacity: 1; transform: none; }
     .rap .leaf { animation: rap .95s linear; }
     @keyframes rap {   /* three raps; their times match RAPS in the script */
       0%, 10%, 31%, 41%, 63%, 73%, 100% { transform: none; }
@@ -291,25 +289,25 @@
     }
     @keyframes kn-pop {
       0%   { transform: none; }
-      16%  { transform: translateY(-3%) scale(1.22) rotate(-6deg); }
-      30%  { transform: translateY(-1%) scale(1.17) rotate(6deg); }
-      44%  { transform: translateY(-3%) scale(1.2) rotate(-4deg); }
-      58%  { transform: translateY(-5%) scale(1.25) rotate(3.5deg); }
-      74%  { transform: translateY(-2%) scale(1.17) rotate(-2deg); }
-      100% { transform: translateY(-2%) scale(1.18) rotate(0); }
+      16%  { transform: translateY(-1.5%) scale(1.08) rotate(-2.5deg); }
+      30%  { transform: translateY(-.5%) scale(1.06) rotate(2.5deg); }
+      44%  { transform: translateY(-1.5%) scale(1.07) rotate(-1.5deg); }
+      58%  { transform: translateY(-2%) scale(1.09) rotate(1.2deg); }
+      74%  { transform: translateY(-1%) scale(1.06) rotate(-.6deg); }
+      100% { transform: translateY(-1%) scale(1.07) rotate(0); }
     }
     @keyframes kn-rattle {
-      0%, 78%, 100% { transform: translateY(-2%) scale(1.18) rotate(0); }
-      82% { transform: translateY(-3%) scale(1.2) rotate(-3deg); }
-      86% { transform: translateY(-2%) scale(1.18) rotate(3deg); }
-      90% { transform: translateY(-3%) scale(1.19) rotate(-1.5deg); }
-      94% { transform: translateY(-2%) scale(1.18) rotate(1deg); }
+      0%, 78%, 100% { transform: translateY(-1%) scale(1.07) rotate(0); }
+      82% { transform: translateY(-1.2%) scale(1.075) rotate(-1deg); }
+      86% { transform: translateY(-1%) scale(1.07) rotate(1deg); }
+      90% { transform: translateY(-1.2%) scale(1.072) rotate(-.5deg); }
+      94% { transform: translateY(-1%) scale(1.07) rotate(.3deg); }
     }
     @media (prefers-reduced-motion: no-preference) {
-      .tease .kn { opacity: 1; filter: drop-shadow(0 9px 8px rgba(0, 0, 0, .6)); animation: kn-pop .85s ease-out both; }
+      .tease .kn { opacity: 1; filter: drop-shadow(0 5px 5px rgba(0, 0, 0, .45)); animation: kn-pop .85s ease-out both; }
     }
     @media (prefers-reduced-motion: no-preference) and (hover: hover) {
-      .knocker:hover .kn { opacity: 1; filter: drop-shadow(0 9px 8px rgba(0, 0, 0, .6)); animation: kn-pop .85s ease-out both, kn-rattle 2.6s .85s infinite; }
+      .knocker:hover .kn { opacity: 1; filter: drop-shadow(0 5px 5px rgba(0, 0, 0, .45)); animation: kn-pop .85s ease-out both, kn-rattle 2.6s .85s infinite; }
     }
 
     /* a fine line at the bottom inviting a scroll */
@@ -340,7 +338,7 @@
     @media (prefers-reduced-motion: reduce) {
       .cue::after { animation: none; transform: none; opacity: 0.6; }
       .stage.drift, .rap .leaf { animation: none; }
-      /* no swing and no zoom: the door dissolves and the screen fades up */
+      /* no swing and no walk: the door dissolves and the screen fades up */
       .leaf { transition: opacity 0.8s ease; }
       .open .leaf { transform: none; opacity: 0; }
       .face::after, .open .face::after { transition: none; opacity: 0; }
@@ -457,14 +455,19 @@
        door, fills the screen. Narrower screens lose only the sides; nothing is
        cropped from the top. The crest bar and quote appear on scroll. */
     @media (orientation: portrait) {
-      .photo { object-position: 50% 0%; }
+      .photo, .wall { object-position: 50% 0%; }
     }
     /* Dark mode: the door opens onto the hall at night, in the door's own slate */
     @media (prefers-color-scheme: dark) {
       :root { --shell: #161c1f; }
-      .head { background: linear-gradient(#2a363b, #161c1f); }
-      .strike { background: linear-gradient(to left, #33424a, #161c1f); }
-      .hinge { background: linear-gradient(to right, #222c30, #161c1f); }
+      :root {
+        --floor-near: #0d1113; --floor-far: #12171a;
+        --ceil-near: #0f1416; --ceil-far: #13191c;
+        --side-near: #29343a; --side-far: #1c2427;
+        --head-near: #4b5356; --head-far: #2a3236;
+        --strike-near: #8d8f8a; --strike-far: #3a4448;
+        --hinge-near: #6a6f6e; --hinge-far: #2f393d;
+      }
       .box {
         box-shadow:
           inset 0 0 0 1px rgba(239, 232, 214, .07),
@@ -486,7 +489,6 @@
 
   <main id="top">
     <section class="hero">
-      <div class="camera" id="camera">
       <div class="stage" id="stage">
         <picture>
           <!-- Phones and other tall screens: the whole doorway, centred on the door -->
@@ -506,20 +508,26 @@
                alt="The green front door of 44 JFK Street, with a bronze knocker and brass numerals, framed by white columns.">
         </picture>
         <div class="doorway" id="doorway">
-          <div class="inside"></div>
-          <div class="jamb head"></div>
-          <div class="jamb strike"></div>
-          <div class="jamb hinge"></div>
-          <div class="leaf" id="leaf">
-            <div class="face" id="face">
-              <img alt="" decoding="sync">
-              <img alt="" decoding="sync">
+          <div class="camera" id="camera">
+            <div class="plane far" id="far"></div>
+            <div class="plane floor" id="floor"></div>
+            <div class="plane ceil" id="ceil"></div>
+            <div class="plane side" id="lwall"></div>
+            <div class="plane side" id="rwall"></div>
+            <div class="plane head" id="head"></div>
+            <div class="plane strike" id="strike"></div>
+            <div class="plane hinge" id="hinge"></div>
+            <div class="leaf" id="leaf">
+              <div class="face" id="face">
+                <img alt="" decoding="sync">
+                <img alt="" decoding="sync">
+              </div>
+              <div class="edge"></div>
             </div>
-            <div class="edge"></div>
+            <img class="wall" id="wall" alt="" decoding="sync">
           </div>
         </div>
         <button type="button" class="knocker" id="knocker" aria-label="Knock"><span class="kn"><i></i></span></button>
-      </div>
       </div>
       <span class="cue" aria-hidden="true"></span>
     </section>
@@ -638,6 +646,7 @@
     var doorway = document.getElementById('doorway');
     var leaf = document.getElementById('leaf');
     var face = document.getElementById('face');
+    var wall = document.getElementById('wall');
     var soon = document.getElementById('soon');
     var knocker = document.getElementById('knocker');
 
@@ -648,6 +657,7 @@
       portrait:  { tl: [.1341, .2175], tr: [.8649, .2149], br: [.8677, 1], bl: [.1353, 1], knocker: [.455, .31, .548, .422], wreath: [.4985, .027] }
     };
     var EYE = .52;   // the camera's eye level, as a fraction of the photograph's height
+    var GROUND = 1.3;   // how far below the top of the photograph the threshold lies, in its heights
     var opening;     // the doorway on this screen, set by placeDoor() and used by zoomIn()
 
     // Lay the door and knocker over the photograph as it is cropped on this screen
@@ -661,22 +671,51 @@
       // A whole-pixel box, so the copy of the photograph lands on the very pixels of the original
       var left = Math.floor(ox + Math.min(door.tl[0], door.bl[0]) * rw), top = Math.floor(Math.min(door.tl[1], door.tr[1]) * rh);
       var width = Math.ceil(ox + Math.max(door.tr[0], door.br[0]) * rw) - left;
-      var height = Math.ceil(rh * 1.5) - top;   // runs past the photo so the swinging edge never shows a gap
+      var ground = Math.ceil(rh * GROUND);      // well below the screen: the photograph cuts the door off
+      var height = ground - top;
       var seen = Math.min(H, rh) - top;
-      opening = { left: left, top: top, width: width, seen: seen };
 
       function corner(p, y) { return (ox + p[0] * rw - left) + 'px ' + (y === undefined ? p[1] * rh - top : y) + 'px'; }
       var outline = 'polygon(' + [corner(door.tl), corner(door.tr), corner(door.br, height), corner(door.bl, height)].join(',') + ')';
-      doorway.style.left = left + 'px';
-      doorway.style.top = top + 'px';
-      doorway.style.width = width + 'px';
-      doorway.style.height = height + 'px';
-      doorway.style.perspective = width * 2.3 + 'px';
-      doorway.style.perspectiveOrigin = '50% ' + (rh * EYE - top) + 'px';
-      doorway.style.clipPath = outline;
-      doorway.style.setProperty('--thick', width * .042 + 'px');
-      doorway.style.setProperty('--depth', width * .14 + 'px');
-      doorway.style.setProperty('--seen', seen + 'px');
+
+      // The eye, opposite the middle of the door, and everything measured from it
+      var eyeX = left + width / 2, eyeY = rh * EYE, eye = width * 2.3;
+      var thick = width * .06, reveal = width * .24;
+      var hallLeft = eyeX - width * .62, hallWidth = width * 1.24, ceiling = top - width * .1, hallHeight = ground - ceiling, hall = eye * 1.6;
+      doorway.style.perspective = eye + 'px';
+      doorway.style.perspectiveOrigin = eyeX + 'px ' + eyeY + 'px';
+      doorway.style.setProperty('--thick', thick + 'px');
+
+      function plane(id, x, y, z, turn, w, h) {
+        document.getElementById(id).style.transform = 'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) ' + turn + ' scale(' + w / 100 + ',' + h / 100 + ')';
+      }
+      plane('far', hallLeft, ceiling, -hall, '', hallWidth, hallHeight);
+      plane('floor', hallLeft, ground, 0, 'rotateX(-90deg)', hallWidth, hall);
+      plane('ceil', hallLeft, ceiling, 0, 'rotateX(-90deg)', hallWidth, hall);
+      plane('lwall', hallLeft, ceiling, 0, 'rotateY(90deg)', hall, hallHeight);
+      plane('rwall', hallLeft + hallWidth, ceiling, 0, 'rotateY(90deg)', hall, hallHeight);
+      plane('head', left, top, 0, 'rotateX(-90deg)', width, reveal);
+      plane('strike', left + width, top, 0, 'rotateY(90deg)', reveal, height);
+      plane('hinge', left, top, 0, 'rotateY(90deg)', reveal, height);
+
+      // Walk until the far wall, and so the destination colour, fills the screen
+      var fill = 1.06 * Math.max(eyeX / (eyeX - hallLeft), (W - eyeX) / (hallLeft + hallWidth - eyeX), eyeY / (eyeY - ceiling), (H - eyeY) / (ground - eyeY));
+      opening = { dolly: eye + hall - eye / fill };
+
+      leaf.style.left = left + 'px';
+      leaf.style.top = top + 'px';
+      leaf.style.width = width + 'px';
+      leaf.style.height = height + 'px';
+
+      // The wall: the photograph again, in the same box, with the door cut out of it. The cut
+      // is a pixel inside the door's outline, so no seam can show around the leaf.
+      if (wall.getAttribute('src') !== photo.currentSrc) wall.src = photo.currentSrc;
+      function at(a, b, y) { return ox + (a[0] + (b[0] - a[0]) * (y - a[1] * rh) / (b[1] * rh - a[1] * rh)) * rw; }
+      wall.style.clipPath = 'polygon(0 0,' + W + 'px 0,' + W + 'px ' + H + 'px,' +
+        (at(door.tr, door.br, H) - 1) + 'px ' + H + 'px,' +
+        (ox + door.tr[0] * rw - 1) + 'px ' + (door.tr[1] * rh + 1) + 'px,' +
+        (ox + door.tl[0] * rw + 1) + 'px ' + (door.tl[1] * rh + 1) + 'px,' +
+        (at(door.tl, door.bl, H) + 1) + 'px ' + H + 'px,0 ' + H + 'px)';
 
       // The leaf shows the same photograph at its full width, as parts of the door lie off
       // the screen until it turns; a whole-pixel box keeps it on the original's pixels. The
@@ -784,20 +823,15 @@
     }
 
     // Knock three times, swing the door open, move in through it, and arrive.
-    var OPENS = 950, ZOOM_AFTER = 450, ZOOM_TIME = 1000, VEIL_TIME = 450;
+    var OPENS = 950, ZOOM_AFTER = 600, ZOOM_TIME = 1350, VEIL_TIME = 450;
     var calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
     var knocking = false, timers = [];
     function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
 
-    // Carry the centre of the open doorway to the centre of the screen, close enough
-    // that the doorway fills it.
+    // Walk in: the world comes toward the eye, through the open door and down the hall.
     function zoomIn() {
       if (calm || !opening) return;
-      var W = stage.offsetWidth, H = stage.offsetHeight;
-      var s = Math.max(2.2, Math.max(W / opening.width, H / opening.seen) * 1.35);
-      var x = W / 2 - s * (opening.left + opening.width / 2);
-      var y = H / 2 - s * (opening.top + opening.seen / 2);
-      camera.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')';
+      camera.style.transform = 'translateZ(' + opening.dolly + 'px)';
     }
 
     var themeColor = document.querySelector('meta[name="theme-color"]');
@@ -836,6 +870,7 @@
       document.body.classList.add('entering');
       later(function () {
         stage.classList.remove('rap');
+        void leaf.offsetWidth;          // the raps are over, so the swing starts from a door at rest
         stage.classList.add('open');
       }, OPENS);
       later(zoomIn, OPENS + ZOOM_AFTER);
