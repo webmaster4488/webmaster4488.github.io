@@ -362,7 +362,9 @@
       background: var(--glass);
       -webkit-backdrop-filter: var(--glass-blur);
       backdrop-filter: var(--glass-blur);
-      box-shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.45);
+      padding-bottom: 26px;
+      -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent);
+      mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent);
       transform: translateY(calc(-100% - 32px));
       transition: transform 1.25s cubic-bezier(.12, .82, .18, 1);
       transition-timing-function: linear(0, .36 7%, .68 16%, .86 27%, .94 39%, .98 54%, .995 74%, 1);
@@ -390,11 +392,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+      padding: 40px 16px calc(20px + env(safe-area-inset-bottom));
       background: var(--glass);
       -webkit-backdrop-filter: var(--glass-blur);
       backdrop-filter: var(--glass-blur);
-      box-shadow: 0 -12px 30px -14px rgba(0, 0, 0, 0.45);
+      -webkit-mask-image: linear-gradient(to bottom, transparent, #000 34px);
+      mask-image: linear-gradient(to bottom, transparent, #000 34px);
       text-align: center;
     }
     /* The quote: set like an epigraph. Quote in Century roman,
@@ -641,8 +644,8 @@
     // Where the door's painted edges and the knocker sit in each photograph,
     // as fractions of its width and height. The brass strip around it belongs to the frame.
     var DOORS = {
-      landscape: { tl: [.3175, .2174], tr: [.6909, .2151], br: [.6922, 1], bl: [.3180, 1], knocker: [.483, .31, .529, .422] },
-      portrait:  { tl: [.1341, .2175], tr: [.8649, .2149], br: [.8677, 1], bl: [.1353, 1], knocker: [.455, .31, .548, .422] }
+      landscape: { tl: [.3175, .2174], tr: [.6909, .2151], br: [.6922, 1], bl: [.3180, 1], knocker: [.483, .31, .529, .422], wreath: [.503, .0254] },
+      portrait:  { tl: [.1341, .2175], tr: [.8649, .2149], br: [.8677, 1], bl: [.1353, 1], knocker: [.455, .31, .548, .422], wreath: [.4985, .027] }
     };
     var EYE = .52;   // the camera's eye level, as a fraction of the photograph's height
     var opening;     // the doorway on this screen, set by placeDoor() and used by zoomIn()
@@ -696,6 +699,11 @@
       knocker.style.top = k[1] * rh + 'px';
       knocker.style.width = (k[2] - k[0]) * rw + 'px';
       knocker.style.height = (k[3] - k[1]) * rh + 'px';
+      // The crest in the top bar sits in the middle of the wreath in the photograph
+      var crest = document.querySelector('.bar a');
+      var crestY = door.wreath[1] * rh - (crest.offsetTop + crest.offsetHeight / 2);
+      crest.style.transform = 'translate(' + (ox + door.wreath[0] * rw - (crest.offsetLeft + crest.offsetWidth / 2)) + 'px,' + Math.max(-12, Math.min(12, crestY)) + 'px)';
+
       var kn = knocker.querySelector('i');
       kn.style.backgroundImage = 'url("' + photo.currentSrc + '")';
       kn.style.backgroundSize = rw + 'px ' + rh + 'px';
