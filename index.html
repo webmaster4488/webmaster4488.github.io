@@ -158,8 +158,27 @@
       text-align: center;
     }
     /* The quote: set like an epigraph. Quote in Century roman,
-       attribution and place in Century small capitals underneath. */
-    .quote { margin: 0; max-width: 40em; }
+       attribution in Century small capitals underneath.
+       The quotes share one grid cell, so the footer is always as tall as the
+       longest one and the page doesn't jump as they rotate. */
+    .quotes {
+      display: grid;
+      width: 100%;
+      max-width: 40em;
+      align-items: center;
+      justify-items: center;
+    }
+    .quote { grid-area: 1 / 1; margin: 0; max-width: 100%; }
+    .js .quote {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.6s ease, visibility 0s linear 0.6s;
+    }
+    .js .quote.on {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.6s ease 0.6s, visibility 0s linear 0.6s;
+    }
     .quote blockquote {
       margin: 0;
       font-size: clamp(14px, 1vw, 16px);
@@ -233,28 +252,36 @@
     </section>
 
     <footer class="close">
-      <figure class="quote">
-        <blockquote id="quote-text">“Without these friendships—life, what cauchemar!”</blockquote>
-        <figcaption id="quote-by">T. S. Eliot ‘10</figcaption>
-      </figure>
+      <div class="quotes" id="quotes">
+        <figure class="quote on">
+          <blockquote>“Without these friendships—life, what cauchemar!”</blockquote>
+          <figcaption>T. S. Eliot ‘10</figcaption>
+        </figure>
+      </div>
     </footer>
   </main>
 
   <script>
-    // A different quote on each visit, from members only.
+    // Quotes from members only, changing every 7 seconds.
     // To add one, copy a line and change the text and name ("\n" starts a new line).
-    // The first three are from Eliot, "Portrait of a Lady" (1917).
+    // Eliot: "Portrait of a Lady" (1917) and a Ballade (1909).
+    // Hagedorn: "A Troop of the Guard", Harvard Class Poem (1907), and "Fighters" (1909).
     var QUOTES = [
       { text: "Without these friendships—life, what cauchemar!", by: "T. S. Eliot ‘10" },
       { text: "To find a friend who has these qualities,\nWho has, and gives\nThose qualities upon which friendship lives.", by: "T. S. Eliot ‘10" },
       { text: "I shall sit here, serving tea to friends.", by: "T. S. Eliot ‘10" },
-      { text: "Your genial influence awaits", by: "T. S. Eliot ‘10" }
+      { text: "Your genial influence awaits", by: "T. S. Eliot ‘10" },
+      { text: "Into the dawn, we ride, we ride,\nFellow and fellow, side by side", by: "Hermann Hagedorn ‘07" },
+      { text: "Friends of the great, the high, the perilous years,\nUpon the brink of mighty things we stand", by: "Hermann Hagedorn ‘07" },
+      { text: "Fearless, to rise or fall,\nArm pressed to arm we stand", by: "Hermann Hagedorn ‘07" }
     ];
-    function showQuote(i) {
-      var el = document.getElementById("quote-text");
-      var lines = QUOTES[i].text.split("\n");
-      el.textContent = "";
-      el.className = lines.length > 1 ? "verse" : "";
+    var quoteFigures = QUOTES.map(function (q) {
+      var lines = q.text.split("\n");
+      var fig = document.createElement("figure");
+      var text = document.createElement("blockquote");
+      var by = document.createElement("figcaption");
+      fig.className = "quote";
+      if (lines.length > 1) text.className = "verse";
       lines.forEach(function (line, n) {
         var span = document.createElement("span");
         span.className = "line";
@@ -265,18 +292,54 @@
           span.appendChild(oq);
         }
         span.appendChild(document.createTextNode(line + (n === lines.length - 1 ? "”" : "")));
-        el.appendChild(span);
+        text.appendChild(span);
       });
-      document.getElementById("quote-by").textContent = QUOTES[i].by;
+      by.textContent = q.by;
+      fig.appendChild(text);
+      fig.appendChild(by);
+      return fig;
+    });
+    var quoteShowing = null;
+    function showQuote(i) {
+      if (quoteShowing) quoteShowing.classList.remove("on");
+      quoteShowing = quoteFigures[i];
+      quoteShowing.classList.add("on");
     }
     (function () {
-      var i = Math.floor(Math.random() * QUOTES.length);
-      try { // avoid showing the same quote twice in a row
-        var last = parseInt(localStorage.getItem("quote"), 10);
-        if (QUOTES.length > 1 && i === last) i = (i + 1 + Math.floor(Math.random() * (QUOTES.length - 1))) % QUOTES.length;
-        localStorage.setItem("quote", String(i));
+      var box = document.getElementById("quotes");
+      box.textContent = "";
+      quoteFigures.forEach(function (fig) { box.appendChild(fig); });
+
+      // Shuffled, so every quote appears once before any repeats
+      var order = QUOTES.map(function (q, i) { return i; });
+      for (var n = order.length - 1; n > 0; n--) {
+        var r = Math.floor(Math.random() * (n + 1));
+        var swap = order[n]; order[n] = order[r]; order[r] = swap;
+      }
+      try { // don't open with the quote that opened the last visit
+        if (order[0] === parseInt(localStorage.getItem("quote"), 10)) order.push(order.shift());
+        localStorage.setItem("quote", String(order[0]));
       } catch (e) {}
-      showQuote(i);
+      showQuote(order[0]);
+
+      // Change only while the quote is on screen, so the first one seen gets its full
+      // time, and hold it while the pointer rests on it.
+      var at = 0, timer, onScreen = false;
+      function run(on) {
+        clearInterval(timer);
+        if (on) timer = setInterval(function () {
+          at = (at + 1) % order.length;
+          showQuote(order[at]);
+        }, 7000);
+      }
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        new IntersectionObserver(function (entries) {
+          onScreen = entries[entries.length - 1].isIntersecting;
+          run(onScreen);
+        }).observe(box);
+        box.addEventListener("mouseenter", function () { run(false); });
+        box.addEventListener("mouseleave", function () { run(onScreen); });
+      }
     })();
   </script>
 
