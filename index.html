@@ -70,21 +70,98 @@
       overflow: hidden;
       background: var(--green-deep);
     }
-    .hero img {
+    .stage {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 0;     /* the drift keeps the top edge fixed */
+    }
+    .photo {
       display: block;
       width: 100%;
       height: 100%;
       object-fit: cover;
       object-position: 50.4% 0%;   /* never crop the top: trim the bottom only */
     }
-    .js .hero img {
-      opacity: 0;
-      transform: scale(1.04);
-    }
-    .js .hero img.loaded {
+    .js .photo { opacity: 0; }
+    .js .photo.loaded {
       opacity: 1;
-      transform: none;
-      transition: opacity 1.6s ease, transform 2.8s cubic-bezier(.2, .7, .2, 1);
+      transition: opacity 1.6s ease;
+    }
+    /* A slow drift toward the door */
+    .stage.drift { animation: drift 40s ease-out both; }
+    @keyframes drift {
+      from { transform: none; }
+      to   { transform: scale(1.03); }
+    }
+
+    /* ---- Knocking: the door swings open ----
+       The leaf is a copy of the door in the photograph, placed exactly over it by
+       script and hidden until the knocker is pressed, so at rest the page is only
+       the photograph. Hinges on the left, opening inward. */
+    .doorway {
+      position: absolute;
+      overflow: hidden;
+      visibility: hidden;
+    }
+    .knocking .doorway { visibility: visible; }
+    .inside, .leaf { position: absolute; inset: 0; }
+    .inside {
+      background: radial-gradient(ellipse 75% 45% at 50% 28%, #3a3a2d 0%, var(--green) 58%, #11171a 100%);
+    }
+    .inside img {
+      position: absolute;
+      left: 50%;
+      width: 40%;
+      height: auto;
+      opacity: 0;
+      transform: translate(-50%, -50%);
+      transition: opacity 0.7s ease;
+    }
+    .open .inside img { opacity: 1; transition: opacity 1s ease 0.7s; }
+    .leaf {
+      background-color: #1a2930;
+      background-repeat: no-repeat;
+      transform-origin: 0 50%;
+      transition: transform 1.7s cubic-bezier(.5, .05, .2, 1);
+    }
+    .leaf::after {   /* the door falls into shade as it turns away */
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: #000;
+      opacity: 0;
+      transition: opacity 1.7s ease;
+    }
+    .open .leaf { transform: rotateY(84deg); }
+    .open .leaf::after { opacity: 0.4; }
+    .rap .leaf { animation: rap 0.6s ease-in-out; }
+    @keyframes rap {
+      0%, 30%, 60%, 100% { transform: none; }
+      12%, 42%           { transform: rotateY(0.7deg); }
+    }
+    .knocker {
+      display: none;
+      position: absolute;
+      padding: 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .js .knocker { display: block; }
+    .knocker:focus-visible { outline: 1px solid var(--gold); outline-offset: 4px; }
+    .knocking .knocker { visibility: hidden; }
+    @media (hover: hover) {
+      .knocker::after {
+        content: "";
+        position: absolute;
+        inset: -35%;
+        border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(255, 226, 160, 0.2), transparent);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+      .knocker:hover::after { opacity: 1; }
     }
 
     /* a fine line at the bottom inviting a scroll */
@@ -114,7 +191,8 @@
     }
     @media (prefers-reduced-motion: reduce) {
       .cue::after { animation: none; transform: none; opacity: 0.6; }
-      .js .hero img { transform: none; }
+      .stage.drift, .rap .leaf { animation: none; }
+      .leaf, .leaf::after, .inside img, .open .inside img { transition: none; }
     }
 
     /* ---- Bar that appears once you scroll ---- */
@@ -214,7 +292,7 @@
        door, fills the screen. Narrower screens lose only the sides; nothing is
        cropped from the top. The crest bar and quote appear on scroll. */
     @media (orientation: portrait) {
-      .hero img { object-position: 50% 0%; }
+      .photo { object-position: 50% 0%; }
     }
   </style>
 </head>
@@ -231,23 +309,30 @@
 
   <main id="top">
     <section class="hero">
-      <picture>
-        <!-- Phones and other tall screens: the whole doorway, centred on the door -->
-        <source media="(orientation: portrait)" type="image/webp"
-                srcset="images/doorway-1200.webp 1200w, images/doorway-1800.webp 1800w, images/doorway-2400.webp 2400w"
-                sizes="(min-aspect-ratio: 5/7) 100vw, 72vh">
-        <source media="(orientation: portrait)"
-                srcset="images/doorway-1200.jpg 1200w, images/doorway-1800.jpg 1800w, images/doorway-2400.jpg 2400w"
-                sizes="(min-aspect-ratio: 5/7) 100vw, 72vh">
-        <source type="image/webp"
-                srcset="images/door-1000.webp 1000w, images/door-1600.webp 1600w, images/door-2400.webp 2400w, images/door-3200.webp 3200w"
-                sizes="(max-aspect-ratio: 7/5) 140vh, 100vw">
-        <img src="images/door-2400.jpg"
-             srcset="images/door-1000.jpg 1000w, images/door-1600.jpg 1600w, images/door-2400.jpg 2400w, images/door-3200.jpg 3200w"
-             sizes="(max-aspect-ratio: 7/5) 140vh, 100vw"
-             width="4691" height="3351"
-             alt="The green front door of 44 JFK Street, with a bronze knocker and brass numerals, framed by white columns.">
-      </picture>
+      <div class="stage" id="stage">
+        <picture>
+          <!-- Phones and other tall screens: the whole doorway, centred on the door -->
+          <source media="(orientation: portrait)" type="image/webp"
+                  srcset="images/doorway-1200.webp 1200w, images/doorway-1800.webp 1800w, images/doorway-2400.webp 2400w"
+                  sizes="(min-aspect-ratio: 5/7) 100vw, 72vh">
+          <source media="(orientation: portrait)"
+                  srcset="images/doorway-1200.jpg 1200w, images/doorway-1800.jpg 1800w, images/doorway-2400.jpg 2400w"
+                  sizes="(min-aspect-ratio: 5/7) 100vw, 72vh">
+          <source type="image/webp"
+                  srcset="images/door-1000.webp 1000w, images/door-1600.webp 1600w, images/door-2400.webp 2400w, images/door-3200.webp 3200w"
+                  sizes="(max-aspect-ratio: 7/5) 140vh, 100vw">
+          <img class="photo" src="images/door-2400.jpg"
+               srcset="images/door-1000.jpg 1000w, images/door-1600.jpg 1600w, images/door-2400.jpg 2400w, images/door-3200.jpg 3200w"
+               sizes="(max-aspect-ratio: 7/5) 140vh, 100vw"
+               width="4691" height="3351"
+               alt="The green front door of 44 JFK Street, with a bronze knocker and brass numerals, framed by white columns.">
+        </picture>
+        <div class="doorway" id="doorway" aria-hidden="true">
+          <div class="inside"><img src="images/crest.webp" alt=""></div>
+          <div class="leaf" id="leaf"></div>
+        </div>
+        <button type="button" class="knocker" id="knocker" aria-label="Knock"></button>
+      </div>
       <span class="cue" aria-hidden="true"></span>
     </section>
 
@@ -344,10 +429,81 @@
   </script>
 
   <script>
-    // Fade the photograph in once it has loaded
-    var photo = document.querySelector('.hero img');
-    function show() { photo.classList.add('loaded'); }
-    if (photo.complete) show(); else { photo.addEventListener('load', show); photo.addEventListener('error', show); }
+    // When the members area is ready, put its address here and a knock will lead to it:
+    // var MEMBERS_URL = "https://members.44jfk.com/";
+    var MEMBERS_URL = "";
+
+    var stage = document.getElementById('stage');
+    var photo = stage.querySelector('.photo');
+    var doorway = document.getElementById('doorway');
+    var leaf = document.getElementById('leaf');
+    var knocker = document.getElementById('knocker');
+
+    // Where the door's corners and the knocker sit in each photograph,
+    // as fractions of its width and height.
+    var DOORS = {
+      landscape: { tl: [.3150, .2150], tr: [.6927, .2125], br: [.6933, 1], bl: [.3165, 1], knocker: [.483, .31, .529, .422] },
+      portrait:  { tl: [.1296, .2150], tr: [.8677, .2122], br: [.8692, 1], bl: [.1328, 1], knocker: [.455, .31, .548, .422] }
+    };
+
+    // Lay the door and knocker over the photograph as it is cropped on this screen
+    function placeDoor() {
+      var iw = photo.naturalWidth, ih = photo.naturalHeight;
+      if (!iw) return;
+      var W = stage.offsetWidth, H = stage.offsetHeight;
+      var door = ih > iw ? DOORS.portrait : DOORS.landscape;
+      var scale = Math.max(W / iw, H / ih), rw = iw * scale, rh = ih * scale;
+      var ox = (W - rw) * parseFloat(getComputedStyle(photo).objectPosition) / 100;
+      var left = door.tl[0] * rw, top = door.tr[1] * rh;
+      var width = door.br[0] * rw - left;
+      var height = rh * 1.5 - top;              // runs past the photo so the swinging edge never shows a gap
+      var seen = Math.min(H, rh) - top;
+
+      function corner(p, y) { return (p[0] * rw - left) + 'px ' + (y === undefined ? p[1] * rh - top : y) + 'px'; }
+      doorway.style.left = ox + left + 'px';
+      doorway.style.top = top + 'px';
+      doorway.style.width = width + 'px';
+      doorway.style.height = height + 'px';
+      doorway.style.perspective = width * 2.2 + 'px';
+      doorway.style.perspectiveOrigin = '50% ' + seen * 0.45 + 'px';
+      doorway.style.clipPath = 'polygon(' + [corner(door.tl), corner(door.tr), corner(door.br, height), corner(door.bl, height)].join(',') + ')';
+
+      leaf.style.backgroundImage = 'url("' + photo.currentSrc + '")';
+      leaf.style.backgroundSize = rw + 'px ' + rh + 'px';
+      leaf.style.backgroundPosition = -left + 'px ' + -top + 'px';
+      doorway.querySelector('img').style.top = seen * 0.44 + 'px';
+
+      var k = door.knocker;
+      knocker.style.left = ox + k[0] * rw + 'px';
+      knocker.style.top = k[1] * rh + 'px';
+      knocker.style.width = (k[2] - k[0]) * rw + 'px';
+      knocker.style.height = (k[3] - k[1]) * rh + 'px';
+    }
+
+    // Fade the photograph in once it has loaded, then begin the drift.
+    // (It loads again if turning a phone switches to the other crop.)
+    function show() { photo.classList.add('loaded'); stage.classList.add('drift'); placeDoor(); }
+    photo.addEventListener('load', show);
+    photo.addEventListener('error', show);
+    if (photo.complete) show();
+    window.addEventListener('resize', placeDoor);
+
+    // Knock twice, swing the door open, then go in (or close again)
+    var knocking = false;
+    function shut() { stage.classList.remove('knocking', 'rap', 'open'); knocking = false; }
+    knocker.addEventListener('click', function () {
+      if (knocking) return;
+      knocking = true;
+      stage.classList.add('knocking', 'rap');
+      setTimeout(function () { stage.classList.remove('rap'); stage.classList.add('open'); }, 650);
+      if (MEMBERS_URL) {
+        setTimeout(function () { location.href = MEMBERS_URL; }, 2900);
+      } else {
+        setTimeout(function () { stage.classList.remove('open'); }, 4800);
+        setTimeout(shut, 6600);
+      }
+    });
+    window.addEventListener('pageshow', function (e) { if (e.persisted) shut(); });   // coming back with the Back button
 
     // Reveal the bar after the first bit of scrolling
     function onScroll() { document.body.classList.toggle('scrolled', window.scrollY > 16); }
