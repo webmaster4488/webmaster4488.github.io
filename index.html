@@ -226,35 +226,25 @@
     .js .knocker { display: block; }
     .knocker:focus-visible { outline: 1px solid var(--gold); outline-offset: 4px; }
     .entering .knocker, .entering .enter-zone { pointer-events: none; }
-    /* Touch it and the knocker swings on its hinge. Only the metal moves: it's cut out of
-       the photograph, with a patch of bare door behind it. Invisible until then. */
-    .kn { position: absolute; inset: 0; opacity: 0; pointer-events: none; transform: translate(var(--kn-x, 0), var(--kn-y, 0)); }
-    .kn i, .kn b { position: absolute; inset: -8%; background: no-repeat center / 100% 100%; }
-    .kn i { background-image: var(--kn-door); }
-    .kn b { background-image: var(--kn); transform-origin: 50% 12%; }
-    @keyframes kn-swing {
-      0%   { transform: none; }
-      14%  { transform: scale(1.012) rotate(-2.4deg); }
-      32%  { transform: scale(1.01) rotate(2.1deg); }
-      50%  { transform: scale(1.006) rotate(-1.5deg); }
-      68%  { transform: scale(1.003) rotate(1deg); }
-      84%  { transform: rotate(-.4deg); }
-      100% { transform: none; }
-    }
-    @keyframes kn-sway {
-      0%, 70%, 100% { transform: none; }
-      76% { transform: rotate(-1deg); }
-      83% { transform: rotate(.8deg); }
-      90% { transform: rotate(-.4deg); }
-      96% { transform: rotate(.2deg); }
+    /* Touch it and the ring lifts off the door and falls back, once, on the bar in the
+       animal's mouth. The head is the photograph, left alone: only the ring is cut out,
+       with a patch of bare door behind it. Invisible until then. */
+    .kn { position: absolute; opacity: 0; pointer-events: none; perspective-origin: 50% 85%; transition: opacity .08s linear; }
+    .kn i, .kn b { position: absolute; inset: 0; background: no-repeat center / 100% 100%; }
+    .kn i { background-image: url("images/knocker-ring-door.webp"); }
+    .kn b { background-image: url("images/knocker-ring.webp"); transform-origin: 50% 2%; }
+    @keyframes ring-lift {
+      0%   { transform: rotateX(0deg); filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)); animation-timing-function: cubic-bezier(.2, .7, .3, 1); }
+      36%  { transform: rotateX(24deg); filter: drop-shadow(0 4px 3px rgba(0, 0, 0, .42)); animation-timing-function: cubic-bezier(.55, 0, .9, .5); }
+      64%  { transform: rotateX(0deg); filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)); animation-timing-function: ease-out; }
+      75%  { transform: rotateX(4deg); filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .2)); animation-timing-function: ease-in; }
+      86%  { transform: rotateX(0deg); filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)); animation-timing-function: ease-out; }
+      93%  { transform: rotateX(1deg); animation-timing-function: ease-in; }
+      100% { transform: rotateX(0deg); filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)); }
     }
     @media (prefers-reduced-motion: no-preference) {
-      .tease .kn { opacity: 1; }
-      .tease .kn b { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3)); animation: kn-swing 1.05s ease-in-out both; }
-    }
-    @media (prefers-reduced-motion: no-preference) and (hover: hover) {
-      .knocker:hover .kn { opacity: 1; }
-      .knocker:hover .kn b { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3)); animation: kn-swing 1.05s ease-in-out both, kn-sway 2.6s 1.05s infinite; }
+      .swing .kn { opacity: 1; }
+      .swing .kn b { animation: ring-lift .95s .08s both; }
     }
 
     /* a fine line at the bottom inviting a scroll */
@@ -567,8 +557,8 @@
     // Where the door's painted edges and the knocker sit in each photograph,
     // as fractions of its width and height. The brass strip around it belongs to the frame.
     var DOORS = {
-      landscape: { tl: [.3175, .2174], tr: [.6909, .2151], br: [.6922, 1], bl: [.3180, 1], knocker: [.483, .31, .529, .422] },
-      portrait:  { tl: [.1341, .2175], tr: [.8649, .2149], br: [.8677, 1], bl: [.1353, 1], knocker: [.455, .31, .548, .422] }
+      landscape: { tl: [.3175, .2174], tr: [.6909, .2151], br: [.6922, 1], bl: [.3180, 1], knocker: [.483, .31, .529, .422], ring: [.48581, .36765, .51992, .41301] },
+      portrait:  { tl: [.1341, .2175], tr: [.8649, .2149], br: [.8677, 1], bl: [.1353, 1], knocker: [.455, .31, .548, .422], ring: [.46333, .36765, .53, .41301] }
     };
 
     // Lay the door and knocker over the photograph as it is cropped on this screen
@@ -591,11 +581,12 @@
       knocker.style.top = k[1] * rh + 'px';
       knocker.style.width = (k[2] - k[0]) * rw + 'px';
       knocker.style.height = (k[3] - k[1]) * rh + 'px';
-      var crop = ih > iw ? 'port' : 'land';
-      knocker.style.setProperty('--kn', 'url("images/knocker-' + crop + '.webp")');
-      knocker.style.setProperty('--kn-door', 'url("images/knocker-' + crop + '-door.webp")');
-      knocker.style.setProperty('--kn-x', crop === 'port' ? '-.88%' : '0%');   // lines the phone cut-out up with the photo
-      knocker.style.setProperty('--kn-y', crop === 'port' ? '.52%' : '0%');
+      var r = door.ring, kn = knocker.querySelector('.kn');
+      kn.style.left = (r[0] - k[0]) * rw + 'px';
+      kn.style.top = (r[1] - k[1]) * rh + 'px';
+      kn.style.width = (r[2] - r[0]) * rw + 'px';
+      kn.style.height = (r[3] - r[1]) * rh + 'px';
+      kn.style.perspective = (r[3] - r[1]) * rh * 5 + 'px';
     }
 
     // Fade the photograph in once it has loaded.
@@ -653,11 +644,12 @@
     });
     window.addEventListener('pageshow', function (e) { if (e.persisted) backToDoor(true); });   // coming back with the Back button
 
+    // The ring lifts and falls once, and always finishes, even if the pointer moves away
+    function swing() { if (!calm) knocker.classList.add('swing'); }
+    knocker.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') swing(); });
+    knocker.addEventListener('animationend', function (e) { if (e.animationName === 'ring-lift') knocker.classList.remove('swing'); });
     // Phones have no hover, so the knocker shows off once by itself
-    if (matchMedia('(hover: none)').matches) {
-      setTimeout(function () { knocker.classList.add('tease'); }, 3500);
-      setTimeout(function () { knocker.classList.remove('tease'); }, 4600);
-    }
+    if (matchMedia('(hover: none)').matches) setTimeout(swing, 3500);
 
     // Reveal the bar after the first bit of scrolling
     function onScroll() { document.body.classList.toggle('scrolled', window.scrollY > 16); }
