@@ -1,0 +1,14 @@
+Copyright © 2026 Ian Q. Chen. All rights reserved.
+
+This notice covers the code, design, text and other original material of this
+website and its members app. No part of it may be copied, modified, distributed
+or reused without written permission from the copyright holder. Being able to
+read this repository or the source of a page grants no licence.
+
+Not covered by this notice:
+
+- Fonts, which remain under their own licences, in the fonts folder.
+- The crest and the names and marks of the club at 44 JFK Street, which belong
+  to their owners.
+- Quotations, which remain with their authors or their estates.
+- Any photograph or other material owned by someone else.
