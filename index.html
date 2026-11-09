@@ -168,6 +168,7 @@
     .gate .go { display: grid; place-items: center; height: 44px; padding: 0 14px; border-radius: 9px; background: #ddd7c5; color: #1b3128; font-size: 15px; }
     .gate .c-foot { display: flex; align-items: baseline; justify-content: space-between; margin-top: 10px; font-size: 11px; letter-spacing: .08em; color: #a9a594; }
     .gate .c-foot b { font-weight: inherit; color: #ddd7c5; }
+    .gate .c-links { display: flex; gap: 14px; }
     .soon {
       margin: 0;
       font-size: 32px;
@@ -257,10 +258,32 @@
       50%  { opacity: 1; }
       60%, 100% { opacity: 0; }
     }
+    /* A few seconds after the page opens: two small raps, only a suggestion. They open nothing. */
+    @keyframes ring-hint {
+      0%   { transform: scale3d(.5, .5, .5) rotateX(0deg); animation-timing-function: cubic-bezier(.2, .7, .4, 1); }
+      17%  { transform: scale3d(.5, .5, .5) rotateX(30deg); animation-timing-function: cubic-bezier(.55, 0, .9, .5); }
+      31%  { transform: scale3d(.5, .5, .5) rotateX(0deg); animation-timing-function: ease-out; }
+      38%  { transform: scale3d(.5, .5, .5) rotateX(4deg); animation-timing-function: ease-in; }
+      45%  { transform: scale3d(.5, .5, .5) rotateX(0deg); animation-timing-function: linear; }
+      50%  { transform: scale3d(.5, .5, .5) rotateX(0deg); animation-timing-function: cubic-bezier(.2, .7, .4, 1); }
+      66%  { transform: scale3d(.5, .5, .5) rotateX(26deg); animation-timing-function: cubic-bezier(.55, 0, .9, .5); }
+      80%  { transform: scale3d(.5, .5, .5) rotateX(0deg); animation-timing-function: ease-out; }
+      87%  { transform: scale3d(.5, .5, .5) rotateX(3deg); animation-timing-function: ease-in; }
+      94%, 100% { transform: scale3d(.5, .5, .5) rotateX(0deg); }
+    }
+    @keyframes ring-hint-clear {
+      0%   { opacity: 0; }
+      8%, 24% { opacity: 1; }
+      31%, 50% { opacity: 0; }
+      57%, 73% { opacity: 1; }
+      80%, 100% { opacity: 0; }
+    }
     @media (prefers-reduced-motion: no-preference) {
-      .swing .kn { opacity: 1; }
+      .swing .kn, .hint .kn { opacity: 1; }
       .swing .kn b { animation: ring-lift 1.2s .08s both; }
       .swing .kn s { animation: ring-clear 1.2s .08s both; }
+      .hint .kn b { animation: ring-hint 1.15s .08s both; }
+      .hint .kn s { animation: ring-hint-clear 1.15s .08s both; }
     }
 
     /* a fine line at the bottom inviting a scroll */
@@ -470,7 +493,7 @@
 
   <div class="veil" id="veil"><div class="veil-in">
     <div class="box coming"><p class="soon" id="soon" role="status"></p><button type="button" class="back">Back</button></div>
-    <div class="box gate" aria-hidden="true"><div class="c-top"><picture><source type="image/webp" srcset="images/crest.webp"><img class="c-crest" src="images/crest.png" alt=""></picture><span class="c-name">Digamma</span></div><svg class="c-tap" viewBox="0 0 24 28" aria-hidden="true"><path d="M3 10.5c1.7 2 1.7 5 0 7M8 8c3 3.5 3 8.5 0 12M13 5.5c4.3 5 4.3 12 0 17M18 3c5.6 6.5 5.6 15.5 0 22" fill="none" stroke="#a9a594" stroke-width="1.9" stroke-linecap="round"/></svg><div class="c-row"><div><span class="lab">Initials</span><span class="inp"></span></div><div><span class="lab">PIN</span><span class="inp"></span></div><span class="go">Enter</span></div><div class="c-foot"><span>Member</span><b>Not a Member?</b></div></div>
+    <div class="box gate" aria-hidden="true"><div class="c-top"><img class="c-crest" src="favicon.png" alt="" width="21" height="26"><span class="c-name">Digamma</span></div><svg class="c-tap" viewBox="0 0 24 28" aria-hidden="true"><path d="M3 10.5c1.7 2 1.7 5 0 7M8 8c3 3.5 3 8.5 0 12M13 5.5c4.3 5 4.3 12 0 17M18 3c5.6 6.5 5.6 15.5 0 22" fill="none" stroke="#a9a594" stroke-width="1.9" stroke-linecap="round"/></svg><div class="c-row"><div><span class="lab">Initials</span><span class="inp"></span></div><div><span class="lab">PIN</span><span class="inp"></span></div><span class="go">Enter</span></div><div class="c-foot"><span>Member</span><span class="c-links"><b>Have a code?</b><b>Not a Member?</b></span></div></div>
   </div></div>
 
   <script>
@@ -555,12 +578,6 @@
       preconnect.href = MEMBERS_URL;
       document.head.appendChild(preconnect);
       if (document.fonts && document.fonts.load) document.fonts.load('500 16px "Instrument Sans"');
-      var ahead = document.createElement('link');     // the login's font, so its words appear at once
-      ahead.rel = 'prefetch';
-      ahead.as = 'font';
-      ahead.crossOrigin = 'anonymous';
-      ahead.href = new URL('/_auth/font.woff2', MEMBERS_URL).href;
-      document.head.appendChild(ahead);
     }
 
     var veil = document.getElementById('veil');
@@ -639,8 +656,20 @@
         if (MEMBERS_URL) later(function () { location.assign(MEMBERS_URL); }, 850);   // once the card has settled
       }, calm ? 100 : ARRIVES);
     }
-    knocker.addEventListener('click', enter);
-    doorZone.addEventListener('click', enter);
+    // On a phone, which has no hover, the ring lifts and strikes first and the door opens on the strike
+    var STRIKE = 820;
+    var onPhone = matchMedia('(hover: none)').matches, pressed = false;
+    function press(e) {
+      if (pressed || entering) return;
+      if (!onPhone || calm) return enter(e);
+      pressed = true;
+      knocker.classList.remove('swing', 'hint');
+      void knocker.offsetWidth;
+      knocker.classList.add('swing');
+      later(function () { pressed = false; enter(e); }, STRIKE);
+    }
+    knocker.addEventListener('click', press);
+    doorZone.addEventListener('click', press);
 
     // Bring the photograph back down, or put it back unseen after the Back button.
     function backToDoor(instant) {
@@ -653,6 +682,7 @@
       void veil.offsetWidth;
       body.remove('still');
       entering = false;
+      pressed = false;
     }
 
     veil.addEventListener('click', function () {
@@ -661,11 +691,16 @@
     window.addEventListener('pageshow', function (e) { if (e.persisted) backToDoor(true); });   // coming back with the Back button
 
     // The ring lifts and falls once, and always finishes, even if the pointer moves away
-    function swing() { if (!calm) knocker.classList.add('swing'); }
+    function swing() { if (!calm && !knocker.classList.contains('hint')) knocker.classList.add('swing'); }
     knocker.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') swing(); });
-    knocker.addEventListener('animationend', function (e) { if (e.animationName === 'ring-lift') knocker.classList.remove('swing'); });
-    // Phones have no hover, so the knocker shows off once by itself
-    if (matchMedia('(hover: none)').matches) setTimeout(swing, 3500);
+    knocker.addEventListener('animationend', function (e) { if (e.animationName === 'ring-lift' || e.animationName === 'ring-hint') knocker.classList.remove('swing', 'hint'); });
+    // A little double knock seven seconds in, to suggest the door. It opens nothing.
+    function hint() {
+      if (calm || pressed || entering || knocker.classList.contains('swing')) return;
+      if (document.hidden) { document.addEventListener('visibilitychange', hint, { once: true }); return; }
+      knocker.classList.add('hint');
+    }
+    setTimeout(hint, 7000);
 
     // Reveal the bar after the first bit of scrolling
     function onScroll() { document.body.classList.toggle('scrolled', window.scrollY > 16); }
