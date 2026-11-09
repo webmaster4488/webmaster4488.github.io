@@ -1,9 +1,17 @@
 # 44jfk.com
 
-Open a GitHub issue using the Site task template. After Claude is enabled, comment `@claude Implement this issue and prepare a pull request with verification steps.`
+Cloudflare Pages hosts the public site from this GitHub repository. The members application lives in the private webmaster4488/digamma-members repository and the existing digamma-members Cloudflare Pages project.
 
-Download the public-site-preview artifact from the pull request check. Unzip it, run `python3 -m http.server 8080` in its root, and open http://localhost:8080. Ask Codex to review the pull request before merging when a second review is useful.
+## Build and publish
 
-GitHub Pages publishes using its existing settings. Check the Pages deployment and Verify public deployment in Actions. To roll back, revert the pull request and verify the resulting Pages deployment.
+Cloudflare production branch is main. Use build command `sh tools/build.sh` and output directory `dist`. The build includes only public website assets. Cloudflare creates a preview for each branch and publishes main to the custom domains after a merge.
 
-Install the Claude GitHub App on this repository, set the Actions secret `ANTHROPIC_API_KEY`, and set the Actions variable `CLAUDE_TASKS_ENABLED` to `true` after merging the workflow. Enable Codex Code Review separately for reviews in GitHub.
+Run `sh tools/build.sh` locally, then serve dist with `python3 -m http.server 8080 --directory dist`.
+
+## Work from notes
+
+Open an issue using the Site task template. Once Claude authentication is configured and CLAUDE_TASKS_ENABLED is true, comment `@claude Implement this issue and prepare a pull request with verification steps.` Review the Cloudflare preview and passing checks before merging. Codex can provide a second review.
+
+## Recovery
+
+Use the Cloudflare Pages deployment history to roll back to a previous successful production deployment, then revert the corresponding change in GitHub. Check the homepage, visitor page and members sign-in link. The Verify public deployment workflow can be run manually from GitHub Actions.

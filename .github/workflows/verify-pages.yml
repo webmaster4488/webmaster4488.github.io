@@ -1,13 +1,15 @@
 name: Verify public deployment
-on: deployment_status
+on:
+  deployment_status:
+  workflow_dispatch:
 
 permissions: {}
 
 jobs:
   verify:
     if: >-
-      github.event.deployment.environment == 'github-pages' &&
-      github.event.deployment_status.state == 'success'
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment.ref == 'main' && github.event.deployment_status.state == 'success')
     runs-on: ubuntu-latest
     steps:
       - name: Check live public pages

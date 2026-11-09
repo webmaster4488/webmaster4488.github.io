@@ -20,10 +20,8 @@ jobs:
           test -s not-a-member/index.html
       - name: Package site preview
         run: |
-          mkdir -p "$RUNNER_TEMP/preview"
-          git archive HEAD -- CNAME LICENSE.txt index.html apple-touch-icon.png favicon.ico favicon.png fonts images not-a-member |
-            tar -x -C "$RUNNER_TEMP/preview"
+          sh tools/build.sh
       - uses: actions/upload-artifact@v6
         with:
           name: public-site-preview
-          path: ${{ runner.temp }}/preview
+          path: dist
