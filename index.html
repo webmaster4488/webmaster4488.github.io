@@ -234,10 +234,10 @@
        animal's mouth. The head is the photograph, left alone: only the ring is cut out,
        with a patch of bare door behind it. Invisible until then. */
     .kn { position: absolute; opacity: 0; pointer-events: none; perspective-origin: 50% 85%; transition: opacity .08s linear; }
-    .kn i, .kn u, .kn b { position: absolute; background: no-repeat center / 100% 100%; }
-    .kn i, .kn u { inset: 0; }
+    .kn i, .kn s, .kn b { position: absolute; background: no-repeat center / 100% 100%; }
+    .kn i { inset: 0; }
     .kn i { background-image: url("images/knocker-ring-door.webp"); }
-    .kn u { background-image: url("images/knocker-ring.webp"); transform-origin: 50% 2%; filter: brightness(0) blur(2.5px); opacity: 0; will-change: transform, opacity; }
+    .kn s { left: -12.5%; top: 0; width: 125%; height: 113.158%; background-image: url("images/knocker-ring-clear.webp"); opacity: 0; will-change: opacity; }
     /* The ring is drawn at twice its size and scaled back down, so it stays sharp as it tilts toward you */
     .kn b { left: -50%; top: -2%; width: 200%; height: 200%; background-image: url("images/knocker-ring.webp"); transform-origin: 50% 2%; transform: scale3d(.5, .5, .5); will-change: transform; }
     @keyframes ring-lift {
@@ -250,20 +250,17 @@
       91%  { transform: scale3d(.5, .5, .5) rotateX(2.5deg); animation-timing-function: ease-in; }
       100% { transform: scale3d(.5, .5, .5) rotateX(0deg); }
     }
-    @keyframes ring-shadow {
-      0%   { transform: rotateX(0deg) translateY(0); opacity: 0; animation-timing-function: cubic-bezier(.16, .8, .3, 1); }
-      30%  { transform: rotateX(46deg) translateY(8px); opacity: .55; animation-timing-function: linear; }
-      38%  { transform: rotateX(44deg) translateY(8px); opacity: .52; animation-timing-function: cubic-bezier(.55, 0, .9, .5); }
-      60%  { transform: rotateX(0deg) translateY(0); opacity: 0; animation-timing-function: ease-out; }
-      71%  { transform: rotateX(9deg) translateY(2px); opacity: .25; animation-timing-function: ease-in; }
-      83%  { transform: rotateX(0deg) translateY(0); opacity: 0; animation-timing-function: ease-out; }
-      91%  { transform: rotateX(2.5deg) translateY(0); opacity: 0; animation-timing-function: ease-in; }
-      100% { transform: rotateX(0deg) translateY(0); opacity: 0; }
+    /* The door behind the ring comes clear as it lifts and takes its shadows back as it lands */
+    @keyframes ring-clear {
+      0%   { opacity: 0; }
+      14%  { opacity: 1; }
+      50%  { opacity: 1; }
+      60%, 100% { opacity: 0; }
     }
     @media (prefers-reduced-motion: no-preference) {
       .swing .kn { opacity: 1; }
       .swing .kn b { animation: ring-lift 1.2s .08s both; }
-      .swing .kn u { animation: ring-shadow 1.2s .08s both; }
+      .swing .kn s { animation: ring-clear 1.2s .08s both; }
     }
 
     /* a fine line at the bottom inviting a scroll */
@@ -456,7 +453,7 @@
                alt="The green front door of 44 JFK Street, with a bronze knocker and brass numerals, framed by white columns.">
         </picture>
         <button type="button" class="enter-zone" id="door" aria-label="Enter"></button>
-        <button type="button" class="knocker" id="knocker" aria-label="Enter"><span class="kn"><i></i><u></u><b></b></span></button>
+        <button type="button" class="knocker" id="knocker" aria-label="Enter"><span class="kn"><i></i><s></s><b></b></span></button>
       </div>
       <span class="cue" aria-hidden="true"></span>
     </section>
