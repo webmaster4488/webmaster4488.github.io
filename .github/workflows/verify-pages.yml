@@ -1,0 +1,17 @@
+name: Verify public deployment
+on: deployment_status
+
+permissions: {}
+
+jobs:
+  verify:
+    if: >-
+      github.event.deployment.environment == 'github-pages' &&
+      github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check live public pages
+        run: |
+          curl --location --fail --silent --show-error --retry 4 --retry-all-errors --max-time 20 https://44jfk.com/ -o homepage.html
+          grep -Fq '<title>Digamma</title>' homepage.html
+          curl --location --fail --silent --show-error --retry 4 --retry-all-errors --max-time 20 https://44jfk.com/not-a-member/ -o /dev/null
