@@ -234,29 +234,14 @@
     .kn i { background-image: url("images/knocker-ring-door.webp"); }
     .kn b { background-image: url("images/knocker-ring.webp"); transform-origin: 50% 2%; }
     @keyframes ring-lift {
-      0%   { transform: rotateX(0deg); filter: brightness(1) drop-shadow(0 0 0 rgba(0, 0, 0, 0)); animation-timing-function: cubic-bezier(.16, .8, .3, 1); }
-      30%  { transform: rotateX(46deg); filter: brightness(1.22) drop-shadow(0 8px 5px rgba(0, 0, 0, .55)); animation-timing-function: linear; }
-      38%  { transform: rotateX(44deg); filter: brightness(1.2) drop-shadow(0 8px 5px rgba(0, 0, 0, .52)); animation-timing-function: cubic-bezier(.55, 0, .9, .5); }
-      60%  { transform: rotateX(0deg); filter: brightness(1) drop-shadow(0 0 0 rgba(0, 0, 0, 0)); animation-timing-function: ease-out; }
-      71%  { transform: rotateX(9deg); filter: brightness(1.05) drop-shadow(0 2px 2px rgba(0, 0, 0, .25)); animation-timing-function: ease-in; }
-      83%  { transform: rotateX(0deg); filter: brightness(1) drop-shadow(0 0 0 rgba(0, 0, 0, 0)); animation-timing-function: ease-out; }
+      0%   { transform: rotateX(0deg); filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)); animation-timing-function: cubic-bezier(.16, .8, .3, 1); }
+      30%  { transform: rotateX(46deg); filter: drop-shadow(0 8px 5px rgba(0, 0, 0, .55)); animation-timing-function: linear; }
+      38%  { transform: rotateX(44deg); filter: drop-shadow(0 8px 5px rgba(0, 0, 0, .52)); animation-timing-function: cubic-bezier(.55, 0, .9, .5); }
+      60%  { transform: rotateX(0deg); filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)); animation-timing-function: ease-out; }
+      71%  { transform: rotateX(9deg); filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .25)); animation-timing-function: ease-in; }
+      83%  { transform: rotateX(0deg); filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)); animation-timing-function: ease-out; }
       91%  { transform: rotateX(2.5deg); animation-timing-function: ease-in; }
-      100% { transform: rotateX(0deg); filter: brightness(1) drop-shadow(0 0 0 rgba(0, 0, 0, 0)); }
-    }
-    /* A warm light falls on the door for as long as the pointer rests on the knocker */
-    .knocker::after {
-      content: "";
-      position: absolute;
-      inset: -32% -70%;
-      border-radius: 50%;
-      background: radial-gradient(closest-side, rgba(74, 60, 40, 1), rgba(74, 60, 40, .55) 55%, rgba(74, 60, 40, 0));
-      mix-blend-mode: color-dodge;
-      opacity: 0;
-      transition: opacity .3s ease;
-      pointer-events: none;
-    }
-    @media (hover: hover) {
-      .knocker:hover::after { opacity: 1; }
+      100% { transform: rotateX(0deg); filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)); }
     }
     @media (prefers-reduced-motion: no-preference) {
       .swing .kn { opacity: 1; }
