@@ -42,9 +42,9 @@
       font-display: swap;
     }
 
-    @font-face {       /* the login's typeface; see fonts/OFL-alegreya-sans.txt */
-      font-family: "Alegreya Sans";
-      src: url("fonts/alegreya-sans-latin-500.woff2") format("woff2");
+    @font-face {       /* the login's typeface; see fonts/OFL-instrument-sans.txt */
+      font-family: "Instrument Sans";
+      src: url("fonts/instrument-sans-latin-var.woff2") format("woff2");
       font-weight: 500;
       font-style: normal;
       font-display: block;
@@ -61,13 +61,6 @@
       --glass: rgba(31, 40, 44, 0.57);   /* the top and bottom bars match */
       --glass-blur: blur(18px) saturate(1.3);
       --forest: #234030;
-      /* The hall beyond the door. Its far wall is --shell exactly. */
-      --floor-near: #bdb097; --floor-far: #ddd3bf;
-      --ceil-near: #d8cfbd; --ceil-far: #e9e1d0;
-      --side-near: #cfc5b1; --side-far: #e6ddcb;
-      --head-near: #c7c2b6; --head-far: #a9a497;
-      --strike-near: #f1ede3; --strike-far: #cbc5b7;
-      --hinge-near: #d6d1c5; --hinge-far: #b4aea1;
       /* The one place the typeface is set. */
       --font: "Schola", "Century", Georgia, serif;
     }
@@ -97,7 +90,7 @@
       inset: 0;
       transform-origin: 50% 0;     /* the drift keeps the top edge fixed */
     }
-    .photo, .wall {
+    .photo {
       display: block;
       width: 100%;
       height: 100%;
@@ -116,47 +109,47 @@
       to   { transform: scale(1.03); }
     }
 
-    /* ---- Knocking: the door swings open and you walk through it ----
-       A real 3D scene laid exactly over the photograph and hidden until the knocker
-       is pressed, so at rest the page is only the photograph. Everything in it is
-       placed by placeDoor(), and everything at z = 0 lands on the photograph's own pixels.
-       .doorway holds the perspective (the eye). .camera is the world, which moves toward
-       the eye to walk in. In it: a hall of plain planes, the frame's jambs and head, the
-       door as a slab, and a copy of the photograph as the wall, with the door's shape cut
-       out of it. Nothing from .camera to a face may use overflow, clip-path, filter or
-       opacity, which would flatten it; only the faces themselves are clipped. */
-    .doorway {
-      position: absolute;
-      inset: 0;
-      visibility: hidden;
-      will-change: transform;   /* keeps the page's layers the same before and during a knock */
+    /* ---- Entering: the photograph bursts out from where it was pressed and dissolves ----
+       The inside waits behind it, and the card springs up as the picture clears. */
+    :root { --burst: .7s cubic-bezier(.32, .72, 0, 1); --bloom: rgba(255, 255, 255, .95); }   /* BURST */
+    .hero {
+      position: relative;
+      z-index: 0;
+      transform-origin: var(--px, 50%) var(--hy, 50%);
+      transition: transform var(--burst), opacity .4s ease, filter .4s ease, z-index 0s linear .7s;
     }
-    .knocking .doorway { visibility: visible; }
-    .open .doorway { background: var(--shell); }
-    .camera, .leaf { position: absolute; transform-style: preserve-3d; }
-    .camera { inset: 0; will-change: transform; }
-    .entering .camera { transition: transform 1.35s cubic-bezier(.5, 0, .3, 1); }   /* ZOOM_TIME */
-    .wall { position: absolute; left: 0; top: 0; width: 100%; height: 100%; max-width: none; }
-    /* Each plane is a small square scaled up by placeDoor(), so it costs almost no memory */
-    .plane { position: absolute; left: 0; top: 0; width: 100px; height: 100px; transform-origin: 0 0; }
-    .far   { background: var(--shell); }
-    .floor { background: linear-gradient(var(--floor-near), var(--floor-far)); }
-    .ceil  { background: linear-gradient(var(--ceil-near), var(--ceil-far)); }
-    .side  { background: linear-gradient(to right, var(--side-near), var(--side-far)); }
-    .head   { background: linear-gradient(var(--head-near), var(--head-far)); }
-    .strike { background: linear-gradient(to right, var(--strike-near), var(--strike-far)); }
-    .hinge  { background: linear-gradient(to right, var(--hinge-near), var(--hinge-far)); }
+    .veiled .hero {
+      z-index: 30;
+      transform: scale(1.62);
+      opacity: 0;
+      filter: blur(10px);
+      pointer-events: none;
+      transition: transform var(--burst), opacity .38s ease-out .04s, filter .38s ease-out, z-index 0s;
+    }
+    .entering main { overflow: clip; }
+    .enter-zone { position: absolute; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .enter-zone:focus-visible { outline: 1px solid var(--gold); outline-offset: -4px; }
     /* Inside: solid cream, which the login page should open on too */
     .veil {
       position: fixed;
       inset: 0;
       z-index: 20;
       background: var(--shell);
-      opacity: 0;
       visibility: hidden;
-      transition: opacity 1.2s ease, visibility 0s linear 1.2s;
+      transition: visibility 0s linear .7s;
     }
-    .veiled .veil { opacity: 1; visibility: visible; transition: opacity 0.45s ease-in, visibility 0s; }
+    .veiled .veil { visibility: visible; transition: visibility 0s; }
+    .veil::before {   /* a soft flash of light from the press */
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at var(--px, 50%) var(--py, 50%), var(--bloom), rgba(255, 255, 255, 0) 62%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .veiled .veil::before { animation: bloom .85s ease-out both; }
+    @keyframes bloom { from { opacity: 1; } to { opacity: 0; } }
+    .veil-in { position: relative; }
     .veil-in {
       display: grid;
       place-items: center;
@@ -166,18 +159,20 @@
       box-sizing: border-box;
     }
     /* A copy of the login card, in the same place, so the page change can't be seen */
-    .box.gate { display: none; padding: 32px 24px 24px; text-align: left; font-family: "Alegreya Sans", sans-serif; font-weight: 500; }
+    .box.gate { display: none; flex-direction: column; justify-content: space-between; aspect-ratio: 1.586; min-height: 216px; padding: 18px 20px 14px; border-radius: 18px; text-align: left; font-family: "Instrument Sans", sans-serif; font-weight: 500; }
     .gating .box.gate { display: block; }
     .gating .coming { display: none; }
-    .gate .fld { margin-bottom: 16px; }
-    .gate .lab { display: block; margin-bottom: 6px; font-size: 16px; line-height: 1.2; color: var(--paper); }
-    .gate .inp { display: block; height: 50px; border-radius: 12px; background: rgba(243, 236, 221, .12); }
-    .gate .go {
-      display: flex; align-items: center; justify-content: center;
-      height: 52px; margin-top: 12px; border-radius: 999px;
-      background: var(--paper); color: var(--forest);
-      font-size: 18px; line-height: 1; letter-spacing: .01em;
-    }
+    .gating .box.gate { display: flex; }
+    .gate .c-top { display: flex; align-items: center; justify-content: space-between; }
+    .gate .c-crest { display: block; height: 26px; width: auto; opacity: .92; }
+    .gate .c-name { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #bdb7a4; }
+    .gate .c-tap { display: block; width: 20px; height: 24px; }
+    .gate .c-row { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+    .gate .lab { display: block; margin-bottom: 4px; font-size: 11.5px; line-height: 1.2; letter-spacing: .08em; color: #bdb7a4; }
+    .gate .inp { display: block; height: 44px; border-radius: 9px; background: rgba(0, 0, 0, .24); box-shadow: inset 0 1px 1px rgba(0, 0, 0, .35), 0 .5px 0 rgba(255, 255, 255, .1); }
+    .gate .go { display: grid; place-items: center; height: 44px; padding: 0 14px; border-radius: 9px; background: #ddd7c5; color: #1b3128; font-size: 15px; }
+    .gate .c-foot { display: flex; align-items: baseline; justify-content: space-between; margin-top: 10px; font-size: 11px; letter-spacing: .08em; color: #a9a594; }
+    .gate .c-foot b { font-weight: inherit; color: #ddd7c5; }
     .soon {
       margin: 0;
       font-size: 32px;
@@ -192,20 +187,17 @@
       width: min(360px, calc(100vw - 40px));
       padding: 56px 24px 24px;
       border-radius: 28px;
-      background: linear-gradient(170deg, #2f5540, var(--forest) 55%, #1c3427);
-      box-shadow:
-        0 1px 2px rgba(35, 64, 48, .1),
-        0 12px 32px rgba(35, 64, 48, .18),
-        0 40px 80px rgba(35, 64, 48, .16);
+      background: linear-gradient(118deg, rgba(255, 255, 255, 0) 24%, rgba(255, 255, 255, .075) 44%, rgba(255, 255, 255, 0) 66%), linear-gradient(155deg, #274237, #1b3128 52%, #14261e);
+      box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .13), inset 0 .5px 0 rgba(255, 255, 255, .16), 0 1px 1px rgba(12, 22, 17, .3), 0 18px 36px -18px rgba(12, 22, 17, .6);
       text-align: center;
       opacity: 0;
-      transform: translateY(14px) scale(.95);
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      transform: scale(.86);
+      transition: opacity 0.26s ease, transform 0.3s ease;
     }
     .arrived .box {
       opacity: 1;
       transform: none;
-      transition: opacity 0.5s ease 0.05s, transform 0.75s cubic-bezier(.16, 1, .3, 1) 0.05s;
+      transition: opacity 0.34s ease, transform 0.78s cubic-bezier(.2, 1.28, .32, 1);
     }
     .back {
       display: block;
@@ -228,43 +220,9 @@
     .back:hover { background: #fff8ea; }
     .back:active { transform: scale(.97); }
     .back:focus-visible { outline: 2px solid var(--paper); outline-offset: 3px; }
-    .still .camera, .still .leaf, .still .face::after { transition: none !important; }
+    .still .veil, .still .hero { transition: none !important; }
     .entering .cue { opacity: 0; }
     .entering .close { box-shadow: none; }
-    .leaf {
-      transform-origin: 0 50% calc(var(--thick) * -1);   /* the inner corner of the hinge side */
-      will-change: transform;
-      transition: transform 1.05s cubic-bezier(.5, 0, .22, 1);
-    }
-    .face { position: absolute; inset: 0; overflow: hidden; background: #1d2a2f; }
-    .face img { position: absolute; max-width: none; object-fit: cover; }
-    .face::after {   /* the street's light leaves the door as it turns, from the far side inward */
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: -200%;
-      width: 300%;
-      background: linear-gradient(to right, rgba(0, 0, 0, .3) 40%, rgba(0, 0, 0, .78) 66%, rgba(0, 0, 0, .86));
-      opacity: 0;
-      transform: translateX(34%);
-      transition: opacity 1.05s cubic-bezier(.5, 0, .22, 1), transform 1.05s cubic-bezier(.5, 0, .22, 1);
-    }
-    .edge {   /* the hinge side of the slab, which comes round to face the street */
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: var(--thick);
-      transform-origin: 0 50%;
-      transform: rotateY(90deg);
-      background: linear-gradient(to right, #46565c, #1f2a2e);
-    }
-    .open .leaf { transform: rotateY(88deg); }
-    .open .face::after { opacity: 1; transform: none; }
-    .rap .leaf { animation: rap .95s linear; }
-    @keyframes rap {   /* three raps; their times match RAPS in the script */
-      0%, 10%, 31%, 41%, 63%, 73%, 100% { transform: none; }
-      2%, 33%, 65%                      { transform: rotateY(.35deg); }
-    }
     .knocker {
       display: none;
       position: absolute;
@@ -276,7 +234,7 @@
     }
     .js .knocker { display: block; }
     .knocker:focus-visible { outline: 1px solid var(--gold); outline-offset: 4px; }
-    .knocking .knocker { opacity: 0; pointer-events: none; }
+    .entering .knocker, .entering .enter-zone { pointer-events: none; }
     /* Touch it and the knocker comes loose: it pops off the door and rattles on its hinge.
        It's a feathered copy of the photograph, invisible until then. */
     .kn { position: absolute; inset: 0; opacity: 0; transform-origin: 50% 8%; pointer-events: none; }
@@ -337,12 +295,12 @@
     }
     @media (prefers-reduced-motion: reduce) {
       .cue::after { animation: none; transform: none; opacity: 0.6; }
-      .stage.drift, .rap .leaf { animation: none; }
-      /* no swing and no walk: the door dissolves and the screen fades up */
-      .leaf { transition: opacity 0.8s ease; }
-      .open .leaf { transform: none; opacity: 0; }
-      .face::after, .open .face::after { transition: none; opacity: 0; }
-      .entering .camera { transition: none; }
+      .stage.drift { animation: none; }
+      /* no burst: the photograph simply fades */
+      .hero { transition: opacity .4s ease, z-index 0s linear .4s; }
+      .veiled .hero { transform: none; filter: none; }
+      .veil { transition: visibility 0s linear .4s; }
+      .veiled .veil::before { animation: none; }
     }
 
     /* ---- Bar that appears once you scroll ---- */
@@ -455,18 +413,12 @@
        door, fills the screen. Narrower screens lose only the sides; nothing is
        cropped from the top. The crest bar and quote appear on scroll. */
     @media (orientation: portrait) {
-      .photo, .wall { object-position: 50% 0%; }
+      .photo { object-position: 50% 0%; }
     }
-    /* Dark mode: the door opens onto the hall at night, in the door's own slate */
+    /* Dark mode: the inside is the door's own slate */
     @media (prefers-color-scheme: dark) {
-      :root { --shell: #161c1f; }
+      :root { --shell: #161c1f; --bloom: rgba(255, 255, 255, .14); }
       :root {
-        --floor-near: #0d1113; --floor-far: #12171a;
-        --ceil-near: #0f1416; --ceil-far: #13191c;
-        --side-near: #29343a; --side-far: #1c2427;
-        --head-near: #4b5356; --head-far: #2a3236;
-        --strike-near: #8d8f8a; --strike-far: #3a4448;
-        --hinge-near: #6a6f6e; --hinge-far: #2f393d;
       }
       .box {
         box-shadow:
@@ -507,27 +459,8 @@
                width="4691" height="3351"
                alt="The green front door of 44 JFK Street, with a bronze knocker and brass numerals, framed by white columns.">
         </picture>
-        <div class="doorway" id="doorway">
-          <div class="camera" id="camera">
-            <div class="plane far" id="far"></div>
-            <div class="plane floor" id="floor"></div>
-            <div class="plane ceil" id="ceil"></div>
-            <div class="plane side" id="lwall"></div>
-            <div class="plane side" id="rwall"></div>
-            <div class="plane head" id="head"></div>
-            <div class="plane strike" id="strike"></div>
-            <div class="plane hinge" id="hinge"></div>
-            <div class="leaf" id="leaf">
-              <div class="face" id="face">
-                <img alt="" decoding="sync">
-                <img alt="" decoding="sync">
-              </div>
-              <div class="edge"></div>
-            </div>
-            <img class="wall" id="wall" alt="" decoding="sync">
-          </div>
-        </div>
-        <button type="button" class="knocker" id="knocker" aria-label="Knock"><span class="kn"><i></i></span></button>
+        <button type="button" class="enter-zone" id="door" aria-label="Enter"></button>
+        <button type="button" class="knocker" id="knocker" aria-label="Enter"><span class="kn"><i></i></span></button>
       </div>
       <span class="cue" aria-hidden="true"></span>
     </section>
@@ -544,7 +477,7 @@
 
   <div class="veil" id="veil"><div class="veil-in">
     <div class="box coming"><p class="soon" id="soon" role="status"></p><button type="button" class="back">Back</button></div>
-    <div class="box gate" aria-hidden="true"><div class="fld"><span class="lab">Initials</span><span class="inp"></span></div><div class="fld"><span class="lab">Password</span><span class="inp"></span></div><span class="go">Enter</span></div>
+    <div class="box gate" aria-hidden="true"><div class="c-top"><picture><source type="image/webp" srcset="images/crest.webp"><img class="c-crest" src="images/crest.png" alt=""></picture><span class="c-name">Digamma</span></div><svg class="c-tap" viewBox="0 0 24 28" aria-hidden="true"><path d="M3 10.5c1.7 2 1.7 5 0 7M8 8c3 3.5 3 8.5 0 12M13 5.5c4.3 5 4.3 12 0 17M18 3c5.6 6.5 5.6 15.5 0 22" fill="none" stroke="#a9a594" stroke-width="1.9" stroke-linecap="round"/></svg><div class="c-row"><div><span class="lab">Initials</span><span class="inp"></span></div><div><span class="lab">PIN</span><span class="inp"></span></div><span class="go">Enter</span></div><div class="c-foot"><span>Member</span><b>Not a Member?</b></div></div>
   </div></div>
 
   <script>
@@ -620,17 +553,15 @@
   </script>
 
   <script>
-    // When the login is ready, put its address here and a knock will lead straight to it:
-    // var MEMBERS_URL = "https://members.44jfk.com/login";
-    // Until then the zoom ends on the quiet "Coming soon" screen.
-    var MEMBERS_URL = "";
+    // Where the door leads. Left empty, it would end on a quiet "Coming soon" screen.
+    var MEMBERS_URL = "https://members.44jfk.com/login";
 
     if (MEMBERS_URL) {
       var preconnect = document.createElement('link');
       preconnect.rel = 'preconnect';
       preconnect.href = MEMBERS_URL;
       document.head.appendChild(preconnect);
-      if (document.fonts && document.fonts.load) document.fonts.load('500 16px "Alegreya Sans"');
+      if (document.fonts && document.fonts.load) document.fonts.load('500 16px "Instrument Sans"');
       var ahead = document.createElement('link');     // the login's font, so its words appear at once
       ahead.rel = 'prefetch';
       ahead.as = 'font';
@@ -639,26 +570,19 @@
       document.head.appendChild(ahead);
     }
 
-    var camera = document.getElementById('camera');
     var veil = document.getElementById('veil');
     var stage = document.getElementById('stage');
     var photo = stage.querySelector('.photo');
-    var doorway = document.getElementById('doorway');
-    var leaf = document.getElementById('leaf');
-    var face = document.getElementById('face');
-    var wall = document.getElementById('wall');
+    var doorZone = document.getElementById('door');
     var soon = document.getElementById('soon');
     var knocker = document.getElementById('knocker');
 
     // Where the door's painted edges and the knocker sit in each photograph,
     // as fractions of its width and height. The brass strip around it belongs to the frame.
     var DOORS = {
-      landscape: { tl: [.3175, .2174], tr: [.6909, .2151], br: [.6922, 1], bl: [.3180, 1], knocker: [.483, .31, .529, .422], wreath: [.503, .0254] },
-      portrait:  { tl: [.1341, .2175], tr: [.8649, .2149], br: [.8677, 1], bl: [.1353, 1], knocker: [.455, .31, .548, .422], wreath: [.4985, .027] }
+      landscape: { tl: [.3175, .2174], tr: [.6909, .2151], br: [.6922, 1], bl: [.3180, 1], knocker: [.483, .31, .529, .422] },
+      portrait:  { tl: [.1341, .2175], tr: [.8649, .2149], br: [.8677, 1], bl: [.1353, 1], knocker: [.455, .31, .548, .422] }
     };
-    var EYE = .52;   // the camera's eye level, as a fraction of the photograph's height
-    var GROUND = 1.3;   // how far below the top of the photograph the threshold lies, in its heights
-    var opening;     // the doorway on this screen, set by placeDoor() and used by zoomIn()
 
     // Lay the door and knocker over the photograph as it is cropped on this screen
     function placeDoor() {
@@ -668,81 +592,18 @@
       var door = ih > iw ? DOORS.portrait : DOORS.landscape;
       var scale = Math.max(W / iw, H / ih), rw = iw * scale, rh = ih * scale;
       var ox = (W - rw) * parseFloat(getComputedStyle(photo).objectPosition) / 100;
-      // A whole-pixel box, so the copy of the photograph lands on the very pixels of the original
-      var left = Math.floor(ox + Math.min(door.tl[0], door.bl[0]) * rw), top = Math.floor(Math.min(door.tl[1], door.tr[1]) * rh);
-      var width = Math.ceil(ox + Math.max(door.tr[0], door.br[0]) * rw) - left;
-      var ground = Math.ceil(rh * GROUND);      // well below the screen: the photograph cuts the door off
-      var height = ground - top;
-      var seen = Math.min(H, rh) - top;
-
-      function corner(p, y) { return (ox + p[0] * rw - left) + 'px ' + (y === undefined ? p[1] * rh - top : y) + 'px'; }
-      var outline = 'polygon(' + [corner(door.tl), corner(door.tr), corner(door.br, height), corner(door.bl, height)].join(',') + ')';
-
-      // The eye, opposite the middle of the door, and everything measured from it
-      var eyeX = left + width / 2, eyeY = rh * EYE, eye = width * 2.3;
-      var thick = width * .06, reveal = width * .24;
-      var hallLeft = eyeX - width * .62, hallWidth = width * 1.24, ceiling = top - width * .1, hallHeight = ground - ceiling, hall = eye * 1.6;
-      doorway.style.perspective = eye + 'px';
-      doorway.style.perspectiveOrigin = eyeX + 'px ' + eyeY + 'px';
-      doorway.style.setProperty('--thick', thick + 'px');
-
-      function plane(id, x, y, z, turn, w, h) {
-        document.getElementById(id).style.transform = 'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) ' + turn + ' scale(' + w / 100 + ',' + h / 100 + ')';
-      }
-      plane('far', hallLeft, ceiling, -hall, '', hallWidth, hallHeight);
-      plane('floor', hallLeft, ground, 0, 'rotateX(-90deg)', hallWidth, hall);
-      plane('ceil', hallLeft, ceiling, 0, 'rotateX(-90deg)', hallWidth, hall);
-      plane('lwall', hallLeft, ceiling, 0, 'rotateY(90deg)', hall, hallHeight);
-      plane('rwall', hallLeft + hallWidth, ceiling, 0, 'rotateY(90deg)', hall, hallHeight);
-      plane('head', left, top, 0, 'rotateX(-90deg)', width, reveal);
-      plane('strike', left + width, top, 0, 'rotateY(90deg)', reveal, height);
-      plane('hinge', left, top, 0, 'rotateY(90deg)', reveal, height);
-
-      // Walk until the far wall, and so the destination colour, fills the screen
-      var fill = 1.06 * Math.max(eyeX / (eyeX - hallLeft), (W - eyeX) / (hallLeft + hallWidth - eyeX), eyeY / (eyeY - ceiling), (H - eyeY) / (ground - eyeY));
-      opening = { dolly: eye + hall - eye / fill };
-
-      leaf.style.left = left + 'px';
-      leaf.style.top = top + 'px';
-      leaf.style.width = width + 'px';
-      leaf.style.height = height + 'px';
-
-      // The wall: the photograph again, in the same box, with the door cut out of it. The cut
-      // is a pixel inside the door's outline, so no seam can show around the leaf.
-      if (wall.getAttribute('src') !== photo.currentSrc) wall.src = photo.currentSrc;
-      function at(a, b, y) { return ox + (a[0] + (b[0] - a[0]) * (y - a[1] * rh) / (b[1] * rh - a[1] * rh)) * rw; }
-      wall.style.clipPath = 'polygon(0 0,' + W + 'px 0,' + W + 'px ' + H + 'px,' +
-        (at(door.tr, door.br, H) - 1) + 'px ' + H + 'px,' +
-        (ox + door.tr[0] * rw - 1) + 'px ' + (door.tr[1] * rh + 1) + 'px,' +
-        (ox + door.tl[0] * rw + 1) + 'px ' + (door.tl[1] * rh + 1) + 'px,' +
-        (at(door.tl, door.bl, H) + 1) + 'px ' + H + 'px,0 ' + H + 'px)';
-
-      // The leaf shows the same photograph at its full width, as parts of the door lie off
-      // the screen until it turns; a whole-pixel box keeps it on the original's pixels. The
-      // second copy, flipped, carries the panels on below the bottom of the picture.
-      var imgs = face.querySelectorAll('img');
-      var boxLeft = Math.floor(ox + 1e-6);
-      for (var i = 0; i < 2; i++) {
-        if (imgs[i].getAttribute('src') !== photo.currentSrc) imgs[i].src = photo.currentSrc;
-        imgs[i].style.width = Math.floor(rw + 1e-6) + 'px';
-        imgs[i].style.height = rh + 'px';
-        imgs[i].style.objectPosition = ox - boxLeft + 'px 0';
-        imgs[i].style.left = boxLeft - left + 'px';
-        imgs[i].style.top = (i ? rh : 0) - top + 'px';
-      }
-      imgs[1].style.transform = 'scaleY(-1)';
-      face.style.clipPath = outline;
+      // Pressing anywhere on the door goes in
+      var doorLeft = ox + Math.min(door.tl[0], door.bl[0]) * rw, doorTop = Math.min(door.tl[1], door.tr[1]) * rh;
+      doorZone.style.left = doorLeft + 'px';
+      doorZone.style.top = doorTop + 'px';
+      doorZone.style.width = ox + Math.max(door.tr[0], door.br[0]) * rw - doorLeft + 'px';
+      doorZone.style.height = H - doorTop + 'px';
 
       var k = door.knocker;
       knocker.style.left = ox + k[0] * rw + 'px';
       knocker.style.top = k[1] * rh + 'px';
       knocker.style.width = (k[2] - k[0]) * rw + 'px';
       knocker.style.height = (k[3] - k[1]) * rh + 'px';
-      // The crest in the top bar sits in the middle of the wreath in the photograph
-      var crest = document.querySelector('.bar a');
-      var crestY = door.wreath[1] * rh - (crest.offsetTop + crest.offsetHeight / 2);
-      crest.style.transform = 'translate(' + (ox + door.wreath[0] * rw - (crest.offsetLeft + crest.offsetWidth / 2)) + 'px,' + Math.max(-12, Math.min(12, crestY)) + 'px)';
-
       var kn = knocker.querySelector('i');
       kn.style.backgroundImage = 'url("' + photo.currentSrc + '")';
       kn.style.backgroundSize = rw + 'px ' + rh + 'px';
@@ -757,129 +618,48 @@
     if (photo.complete) show();
     window.addEventListener('resize', placeDoor);
 
-    // The knocker's sound, made here rather than played from a file: three strikes of
-    // brass on a wooden door, then the latch. All times are in seconds after "start".
-    var RAPS = [0, 0.3, 0.6];
-    var LATCH = 0.9;
-    function playKnock(ctx, start) {
-      var out = ctx.createGain();
-      out.gain.value = 0.24;
-      out.connect(ctx.destination);
-
-      var noise = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.25), ctx.sampleRate);
-      var samples = noise.getChannelData(0);
-      for (var i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
-
-      function fade(t, amp, length) {       // a sharp start, then a natural decay
-        var g = ctx.createGain();
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(amp, t + 0.0006);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + length);
-        g.connect(out);
-        return g;
-      }
-      function tone(t, hz, amp, length, drop) {
-        var o = ctx.createOscillator();
-        o.frequency.setValueAtTime(hz * (drop || 1), t);
-        o.frequency.exponentialRampToValueAtTime(hz, t + 0.014);
-        o.connect(fade(t, amp, length));
-        o.start(t);
-        o.stop(t + length + 0.01);
-      }
-      function hiss(t, hz, q, amp, length) {
-        var s = ctx.createBufferSource(), f = ctx.createBiquadFilter();
-        s.buffer = noise;
-        f.type = 'bandpass';
-        f.frequency.value = hz;
-        f.Q.value = q;
-        s.connect(f);
-        f.connect(fade(t, amp, length));
-        s.start(t, 0, length + 0.01);
-      }
-      function rap(t, force, tune) {
-        hiss(t, 3000, 0.7, 0.7 * force, 0.014);          // the instant of contact
-        hiss(t, 180, 0.9, 0.7 * force, 0.09);            // the thud into the door
-        [[980, 0.12, 0.1], [1560, 0.16, 0.08], [2400, 0.12, 0.06]]
-          .forEach(function (p) { tone(t, p[0] * tune, p[1] * force, p[2]); });      // brass: heavy, kept under the wood
-        [[62, 0.4, 0.3], [110, 0.42, 0.22], [176, 0.36, 0.15], [290, 0.28, 0.09], [470, 0.14, 0.05]]
-          .forEach(function (p) { tone(t, p[0] * tune, p[1] * force, p[2], 1.16); }); // a thick wooden door: low, strong
-      }
-      [[1, 1], [0.84, 0.985], [0.92, 1.01]].forEach(function (r, n) { rap(start + RAPS[n], r[0], r[1]); });
-
-      hiss(start + LATCH, 2600, 2, 0.16, 0.02);          // the latch lifting, very quietly
-      hiss(start + LATCH + 0.055, 3400, 2.5, 0.1, 0.016);
-      tone(start + LATCH + 0.055, 210, 0.12, 0.06, 1.1);
-    }
-
-    var sound;
-    function knockSound() {        // made inside the press, as iPhones insist; silence if it can't be
-      try {
-        var Context = window.AudioContext || window.webkitAudioContext;
-        if (!Context) return;
-        sound = sound || new Context();
-        if (sound.resume) sound.resume();
-        playKnock(sound, sound.currentTime + 0.03);
-      } catch (e) {}
-    }
-
-    // Knock three times, swing the door open, move in through it, and arrive.
-    var OPENS = 950, ZOOM_AFTER = 600, ZOOM_TIME = 1350, VEIL_TIME = 450;
+    var ARRIVES = 90;   // the card starts to spring up just after the press
     var calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var knocking = false, timers = [];
+    var entering = false, timers = [];
     function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
 
-    // Walk in: the world comes toward the eye, through the open door and down the hall.
-    function zoomIn() {
-      if (calm || !opening) return;
-      camera.style.transform = 'translateZ(' + opening.dolly + 'px)';
-    }
-
     var themeColor = document.querySelector('meta[name="theme-color"]');
-    function goToMembers() {
-      if (MEMBERS_URL) {
-        document.body.classList.add('arrived', 'gating');
-        later(function () { location.assign(MEMBERS_URL); }, 850);   // once the card has settled
-        return;
-      }
-      soon.textContent = 'Coming soon';
-      document.body.classList.add('arrived');
+    function enter(e) {
+      if (entering) return;
+      entering = true;
+      var body = document.body.classList;
+      soon.textContent = MEMBERS_URL ? '' : 'Coming soon';
+      if (MEMBERS_URL) body.add('gating');
+      // The burst starts where the door was pressed (at the knocker, from a keyboard)
+      var root = document.documentElement.style, hero = document.querySelector('.hero'), k = knocker.getBoundingClientRect();
+      var x = e && e.detail ? e.clientX : k.left + k.width / 2, y = e && e.detail ? e.clientY : k.top + k.height / 2;
+      root.setProperty('--px', x + 'px');
+      root.setProperty('--py', y + 'px');
+      root.setProperty('--hy', y - hero.getBoundingClientRect().top + 'px');
+      void hero.offsetWidth;
+      body.add('entering', 'veiled');
+      themeColor.content = getComputedStyle(document.documentElement).getPropertyValue('--shell').trim();
+      later(function () {
+        body.add('arrived');
+        if (MEMBERS_URL) later(function () { location.assign(MEMBERS_URL); }, 850);   // once the card has settled
+      }, calm ? 100 : ARRIVES);
     }
+    knocker.addEventListener('click', enter);
+    doorZone.addEventListener('click', enter);
 
-    // Put the door back unseen, behind the solid screen, then let that screen fade away.
+    // Bring the photograph back down, or put it back unseen after the Back button.
     function backToDoor(instant) {
       timers.forEach(clearTimeout);
       timers = [];
-      if (instant === true) veil.style.transition = 'none';
-      document.body.classList.add('still');
-      camera.style.transform = '';
-      stage.classList.remove('knocking', 'rap', 'open');
-      document.body.classList.remove('entering', 'veiled', 'arrived', 'gating');
+      var body = document.body.classList;
+      if (instant === true) body.add('still');
+      body.remove('entering', 'veiled', 'arrived', 'gating');
       themeColor.content = '#1f282c';
-      void camera.offsetWidth;
-      document.body.classList.remove('still');
-      veil.style.transition = '';
-      knocking = false;
+      void veil.offsetWidth;
+      body.remove('still');
+      entering = false;
     }
 
-    knocker.addEventListener('click', function () {
-      if (knocking) return;
-      knocking = true;
-      soon.textContent = '';
-      knockSound();
-      stage.classList.add('knocking', 'rap');
-      document.body.classList.add('entering');
-      later(function () {
-        stage.classList.remove('rap');
-        void leaf.offsetWidth;          // the raps are over, so the swing starts from a door at rest
-        stage.classList.add('open');
-      }, OPENS);
-      later(zoomIn, OPENS + ZOOM_AFTER);
-      later(function () {
-        document.body.classList.add('veiled');
-        themeColor.content = getComputedStyle(document.documentElement).getPropertyValue('--shell').trim();
-      }, OPENS + ZOOM_AFTER + ZOOM_TIME - VEIL_TIME);
-      later(goToMembers, OPENS + ZOOM_AFTER + ZOOM_TIME);
-    });
     veil.addEventListener('click', function () {
       if (document.body.classList.contains('arrived') && !document.body.classList.contains('gating')) backToDoor();
     });
